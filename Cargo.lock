@@ -18,46 +18,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
-name = "agent-rs"
-version = "0.1.0"
-
-[[package]]
-name = "agent_bin"
-version = "0.1.0"
-dependencies = [
- "agent_core",
-]
-
-[[package]]
-name = "agent_core"
-version = "0.1.0"
-dependencies = [
- "async-nats",
- "async-scoped",
- "bytes",
- "config",
- "directories",
- "futures",
- "futures-util",
- "humansize",
- "itoa",
- "rand",
- "reqwest",
- "serde",
- "serde_json",
- "sysinfo",
- "thiserror",
- "tokio",
- "tracing",
- "tracing-test",
- "whoami",
- "windows 0.51.1",
- "winreg 0.51.0",
- "wmi",
- "xshell",
-]
-
-[[package]]
 name = "ahash"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -807,6 +767,46 @@ name = "ipnet"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28b29a3cd74f0f4598934efe3aeba42bae0eb4680554128851ebbecb02af14e6"
+
+[[package]]
+name = "ironhive"
+version = "0.1.0"
+
+[[package]]
+name = "ironhive_bin"
+version = "0.1.0"
+dependencies = [
+ "ironhive_core",
+]
+
+[[package]]
+name = "ironhive_core"
+version = "0.1.0"
+dependencies = [
+ "async-nats",
+ "async-scoped",
+ "bytes",
+ "config",
+ "directories",
+ "futures",
+ "futures-util",
+ "humansize",
+ "itoa",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-test",
+ "whoami",
+ "windows 0.51.1",
+ "winreg 0.51.0",
+ "wmi",
+ "xshell",
+]
 
 [[package]]
 name = "itoa"

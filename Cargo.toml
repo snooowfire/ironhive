@@ -1,5 +1,5 @@
 [package]
-name = "agent-rs"
+name = "ironhive"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,3 @@ edition = "2021"
 
 [workspace]
 members = ["bin", "core"]
-
-[workspace.dependencies]
-serde = { version = "1", features = ["derive"] }
