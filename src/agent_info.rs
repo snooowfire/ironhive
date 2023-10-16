@@ -1,12 +1,16 @@
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "deserialize")]
+use serde::Deserialize;
+use serde::Serialize;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct CheckInNats {
     pub agent_id: String,
     pub version: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct AgentInfoNats {
     pub agent_id: String,
     #[serde(rename = "logged_in_username")]
@@ -22,14 +26,16 @@ pub struct AgentInfoNats {
     pub arch: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinSvcNats {
     pub agent_id: String,
     #[serde(rename = "services")]
     pub win_svcs: Vec<WindowsService>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WindowsService {
     pub name: String,
     pub status: String,
@@ -44,19 +50,22 @@ pub struct WindowsService {
     pub delayed_auto_start: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinWMINats {
     pub agent_id: String,
     pub wmi: serde_json::Value, // Use serde_json::Value for dynamic deserialization
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinDisksNats {
     pub agent_id: String,
     pub disks: Vec<Disk>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct Disk {
     pub device: String,
     pub fstype: String,
@@ -66,13 +75,15 @@ pub struct Disk {
     pub percent: i32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct PublicIPNats {
     pub agent_id: String,
     pub public_ip: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinSoftwareList {
     pub name: String,
     pub version: String,
@@ -84,12 +95,14 @@ pub struct WinSoftwareList {
     pub uninstall: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
+#[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinSoftwareNats {
     pub agent_id: String,
     pub software: Vec<WinSoftwareList>,
 }
 
+#[cfg(feature = "deserialize")]
 #[cfg(test)]
 mod tests {
     use super::*;

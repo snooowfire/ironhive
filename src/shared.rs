@@ -1,6 +1,7 @@
 use std::time::Duration;
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub struct ProcessMsg {
     pub name: String,
     pub pid: u32,
@@ -10,12 +11,14 @@ pub struct ProcessMsg {
     pub cpu_percent: String,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub struct RawCMDResp {
     pub results: String,
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub struct RunScriptResp {
     pub stdout: String,
     pub stderr: String,
