@@ -12,6 +12,15 @@ pub struct WmiManager {
     recv: tokio::sync::broadcast::Receiver<Value>,
 }
 
+impl Clone for WmiManager {
+    fn clone(&self) -> Self {
+        Self {
+            notify: self.notify.clone(),
+            recv: self.recv.resubscribe(),
+        }
+    }
+}
+
 struct WmiLocalBlocking {
     wmi: WMI,
     sender: tokio::sync::broadcast::Sender<Value>,
@@ -77,16 +86,6 @@ impl WmiManager {
     }
 }
 
-#[tokio::test]
-#[tracing_test::traced_test]
-async fn test_wmi() {
-    if let Ok(mut wmi) = WmiManager::init().await {
-        let val = wmi.get_wmi_info().await.unwrap();
-        let json = serde_json::to_string_pretty(&val).unwrap();
-        println!("{json}");
-    }
-}
-
 pub struct WMI {
     conn: WMIConnection,
 }
@@ -96,31 +95,6 @@ impl WMI {
         let com_con = COMLibrary::new()?;
         let wmi_con = WMIConnection::new(com_con)?;
         Ok(Self { conn: wmi_con })
-    }
-
-    pub async fn test(&self) -> Result<(), Error> {
-        let mut vals = Vec::new();
-        let mut stream = self
-            .conn
-            .exec_query_async_native_wrapper("SELECT * FROM Win32_USBController")?;
-
-        while let Some(res) = stream.next().await {
-            match res {
-                Err(e) => {
-                    error!("{e:?}");
-                }
-                Ok(q) => match serde_json::to_value(q) {
-                    Ok(qv) => {
-                        vals.push(qv);
-                    }
-                    Err(se) => {
-                        error!("{se:?}");
-                    }
-                },
-            }
-        }
-
-        Ok(())
     }
 
     pub async fn get_wmi_info(&self) -> Value {
@@ -269,4 +243,14 @@ impl WMI {
         Win32_ComputerSystem,
         Win32_PhysicalMemory
     );
+}
+
+#[tokio::test]
+#[tracing_test::traced_test]
+async fn test_wmi() {
+    if let Ok(mut wmi) = WmiManager::init().await {
+        let val = wmi.get_wmi_info().await.unwrap();
+        let json = serde_json::to_string_pretty(&val).unwrap();
+        println!("{json}");
+    }
 }

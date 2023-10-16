@@ -2,7 +2,7 @@ use std::{collections::HashMap, ffi::OsStr, path::PathBuf, process::Output, time
 
 use tokio::process::Command;
 
-use crate::{error::Error, Agent};
+use crate::error::Error;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct CmdOptions<P = String, A = String, K = String, V = String> {
@@ -132,65 +132,65 @@ where
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub struct CmdArgs<S = String, A = String> {
-    pub shell: S,
-    pub cmd_args: Vec<A>,
-    pub detached: bool,
-    pub timeout: Duration,
-}
+// #[derive(Debug, serde::Serialize, serde::Deserialize)]
+// pub struct CmdArgs<S = String, A = String> {
+//     pub shell: S,
+//     pub cmd_args: Vec<A>,
+//     pub detached: bool,
+//     pub timeout: Duration,
+// }
 
-impl<S, A> CmdArgs<S, A>
-where
-    S: AsRef<OsStr> + for<'s> From<&'s str>,
-    A: AsRef<OsStr> + for<'s> From<&'s str> + Clone,
-{
-    pub async fn run(self) -> Result<Output, Error> {
-        let Self {
-            shell,
-            cmd_args,
-            detached,
-            timeout,
-        } = self;
-        #[cfg(windows)]
-        {
-            let shell = shell.as_ref();
-            let (program, args) = if shell.eq("cmd") {
-                let mut args = vec!["/C".into()];
-                args.extend_from_slice(&cmd_args);
-                (get_cmd_exe(), args)
-            } else if shell.eq("powershell") {
-                let mut args = vec!["-NonInteractive".into(), "-NoProfile".into()];
-                args.extend_from_slice(&cmd_args);
-                (get_powershell_exe(), args)
-            } else {
-                return Err(Error::UnsupportedShell(shell.to_string_lossy().to_string()));
-            };
+// impl<S, A> CmdArgs<S, A>
+// where
+//     S: AsRef<OsStr> + for<'s> From<&'s str>,
+//     A: AsRef<OsStr> + for<'s> From<&'s str> + Clone,
+// {
+//     pub async fn run(self) -> Result<Output, Error> {
+//         let Self {
+//             shell,
+//             cmd_args,
+//             detached,
+//             timeout,
+//         } = self;
+//         #[cfg(windows)]
+//         {
+//             let shell = shell.as_ref();
+//             let (program, args) = if shell.eq("cmd") {
+//                 let mut args = vec!["/C".into()];
+//                 args.extend_from_slice(&cmd_args);
+//                 (get_cmd_exe(), args)
+//             } else if shell.eq("powershell") {
+//                 let mut args = vec!["-NonInteractive".into(), "-NoProfile".into()];
+//                 args.extend_from_slice(&cmd_args);
+//                 (get_powershell_exe(), args)
+//             } else {
+//                 return Err(Error::UnsupportedShell(shell.to_string_lossy().to_string()));
+//             };
 
-            return CmdOptions {
-                detached,
-                program,
-                args,
-                env_vars: empty_vec(),
-                timeout,
-            }
-            .run()
-            .await;
-        }
-        #[cfg(not(windows))]
-        {
-            return CmdOptions {
-                detached,
-                program: shell,
-                args: cmd_args,
-                env_vars: empty_vec(),
-                timeout,
-            }
-            .run()
-            .await;
-        }
-    }
-}
+//             return CmdOptions {
+//                 detached,
+//                 program,
+//                 args,
+//                 env_vars: empty_vec(),
+//                 timeout,
+//             }
+//             .run()
+//             .await;
+//         }
+//         #[cfg(not(windows))]
+//         {
+//             return CmdOptions {
+//                 detached,
+//                 program: shell,
+//                 args: cmd_args,
+//                 env_vars: empty_vec(),
+//                 timeout,
+//             }
+//             .run()
+//             .await;
+//         }
+//     }
+// }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct CmdExe<E = String, A = String> {
@@ -275,87 +275,78 @@ where
 
         let ext = mode.ext();
 
-        let sh = xshell::Shell::new()?;
-        let temp_dir = sh.create_temp_dir()?;
-
-        let temp_file = {
-            loop {
-                let mut buffer = itoa::Buffer::new();
-                let file_name = buffer.format(rand::random::<u64>()).to_string() + ext;
-
-                let res = temp_dir.path().join(file_name);
-                if !res.exists() {
-                    break res;
-                }
-            }
-        };
-        sh.write_file(&temp_file, code)?;
-
-        #[cfg(windows)]
-        {
-            CmdOptions {
-                detached,
-                args: {
-                    match mode {
-                        ScriptMode::PowerShell => {
-                            let mut tmp = vec![
-                                "-NonInteractive".into(),
-                                "-NoProfile".into(),
-                                "-ExecutionPolicy".into(),
-                                "Bypass".into(),
-                                temp_file.to_string_lossy().to_string(),
-                            ];
-                            tmp.extend_from_slice(&args);
-                            tmp
-                        }
-                        ScriptMode::Python { .. } => {
-                            let mut tmp = vec![temp_file.to_string_lossy().to_string()];
-                            tmp.extend_from_slice(&args);
-                            tmp
-                        }
-                        ScriptMode::CMD => args,
-                        ScriptMode::Directly => args,
-                    }
-                },
-                program: {
-                    match mode {
-                        ScriptMode::PowerShell => get_powershell_exe(),
-                        ScriptMode::Python { bin } => bin,
-                        ScriptMode::CMD => get_cmd_exe(),
-                        ScriptMode::Directly => temp_file,
-                    }
-                },
-                env_vars: env_vars.into_iter().collect(),
-                timeout,
-            }
-            .run()
-            .await
-        }
-        #[cfg(not(windows))]
-        {
-            match mode {
-                ScriptMode::Python { bin } => CmdOptions {
+        let temp_file = crate::temp_file::TempFile::new(ext, code).await?;
+        let temp_file_path = temp_file.path();
+        let res = {
+            #[cfg(windows)]
+            {
+                CmdOptions {
                     detached,
-                    program: bin,
                     args: {
-                        let mut tmp = vec![temp_file.to_string_lossy().to_string()];
-                        tmp.extend_from_slice(&args);
-                        tmp
+                        match mode {
+                            ScriptMode::PowerShell => {
+                                let mut tmp = vec![
+                                    "-NonInteractive".into(),
+                                    "-NoProfile".into(),
+                                    "-ExecutionPolicy".into(),
+                                    "Bypass".into(),
+                                    temp_file_path.to_string_lossy().to_string(),
+                                ];
+                                tmp.extend_from_slice(&args);
+                                tmp
+                            }
+                            ScriptMode::Python { .. } => {
+                                let mut tmp = vec![temp_file_path.to_string_lossy().to_string()];
+                                tmp.extend_from_slice(&args);
+                                tmp
+                            }
+                            ScriptMode::CMD => args,
+                            ScriptMode::Directly => args,
+                        }
+                    },
+                    program: {
+                        match mode {
+                            ScriptMode::PowerShell => get_powershell_exe(),
+                            ScriptMode::Python { bin } => bin,
+                            ScriptMode::CMD => get_cmd_exe(),
+                            ScriptMode::Directly => temp_file_path.to_path_buf(),
+                        }
                     },
                     env_vars: env_vars.into_iter().collect(),
                     timeout,
-                },
-                _ => CmdOptions {
-                    detached,
-                    program: temp_file,
-                    args,
-                    env_vars: env_vars.into_iter().collect(),
-                    timeout,
-                },
+                }
+                .run()
+                .await
             }
-            .run()
-            .await
-        }
+            #[cfg(not(windows))]
+            {
+                match mode {
+                    ScriptMode::Python { bin } => CmdOptions {
+                        detached,
+                        program: bin,
+                        args: {
+                            let mut tmp = vec![temp_file_path.to_string_lossy().to_string()];
+                            tmp.extend_from_slice(&args);
+                            tmp
+                        },
+                        env_vars: env_vars.into_iter().collect(),
+                        timeout,
+                    },
+                    _ => CmdOptions {
+                        detached,
+                        program: temp_file_path.to_path_buf(),
+                        args,
+                        env_vars: env_vars.into_iter().collect(),
+                        timeout,
+                    },
+                }
+                .run()
+                .await
+            }
+        };
+
+        drop(temp_file);
+        res
     }
 }
 
