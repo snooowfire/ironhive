@@ -97,8 +97,7 @@ impl super::Agent {
                             #[cfg(windows)]
                             {
                                 let mut wmi = wmi.clone();
-                                let info = wmi.get_wmi_info().await?;
-                                info
+                                wmi.get_wmi_info().await?
                             }
                             #[cfg(not(windows))]
                             {

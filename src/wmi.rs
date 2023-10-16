@@ -117,7 +117,7 @@ impl WMI {
             }};
         }
 
-        let info = wmi_info!(
+        wmi_info!(
             comp_sys_prod = Win32_ComputerSystemProduct,
             comp_sys = Win32_ComputerSystem,
             network_config = Win32_NetworkAdapterConfiguration,
@@ -131,9 +131,7 @@ impl WMI {
             cpu = Win32_Processor,
             usb = Win32_USBController,
             graphics = Win32_VideoController
-        );
-
-        info
+        )
     }
 }
 

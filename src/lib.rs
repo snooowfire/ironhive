@@ -8,8 +8,10 @@ mod cmd;
 mod utils;
 mod temp_file;
 #[cfg(windows)]
+#[allow(dead_code)]
 mod svc;
 #[cfg(windows)]
+#[allow(clippy::upper_case_acronyms)]
 mod wmi;
 
 pub use agent::Agent;

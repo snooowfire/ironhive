@@ -217,7 +217,7 @@ impl Mgr {
         };
 
         Ok(services
-            .into_iter()
+            .iter_mut()
             .map(|s| PCWSTR::from_raw(s.lpServiceName.as_ptr()))
             .collect())
     }

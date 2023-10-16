@@ -31,13 +31,11 @@ async fn handle_url(client: &Client, url: &str) -> Result<IpAddr, Error> {
             if let Ok(parsed_ip) = ip_stripped.parse::<IpAddr>() {
                 if parsed_ip.is_ipv4() {
                     return Ok(parsed_ip);
-                } else {
-                    if let Ok(response_v4) = client.get("https://ifconfig.me/ip").send().await {
-                        if let Ok(body_v4) = response_v4.text().await {
-                            let ipv4_stripped = body_v4.trim().to_string();
-                            if let Ok(ipv4_parsed_ip) = ipv4_stripped.parse::<IpAddr>() {
-                                return Ok(ipv4_parsed_ip);
-                            }
+                } else if let Ok(response_v4) = client.get("https://ifconfig.me/ip").send().await {
+                    if let Ok(body_v4) = response_v4.text().await {
+                        let ipv4_stripped = body_v4.trim().to_string();
+                        if let Ok(ipv4_parsed_ip) = ipv4_stripped.parse::<IpAddr>() {
+                            return Ok(ipv4_parsed_ip);
                         }
                     }
                 }

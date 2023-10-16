@@ -109,7 +109,7 @@ impl Agent {
         #[cfg(windows)]
         {
             let hklm = winreg::RegKey::predef(winreg::enums::HKEY_LOCAL_MACHINE);
-            hklm.open_subkey(r#"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired"#).is_ok()
+            hklm.open_subkey(r"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired").is_ok()
         }
         #[cfg(not(windows))]
         {
@@ -155,7 +155,7 @@ impl Agent {
     pub fn get_procs_rpc(&self) -> Vec<ProcessMsg> {
         self.system
             .processes()
-            .into_iter()
+            .iter()
             .filter_map(|(id, p)| {
                 if id.as_u32() != 0 {
                     Some(ProcessMsg {
@@ -166,7 +166,7 @@ impl Agent {
                             .user_id()
                             .and_then(|uid| self.system.get_user_by_id(uid))
                             .map(|user| user.name())
-                            .unwrap_or(&"")
+                            .unwrap_or("")
                             .to_string(),
                         id: p
                             .user_id()

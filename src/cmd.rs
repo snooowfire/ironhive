@@ -94,7 +94,7 @@ where
         {
             let shell = shell.as_ref();
             if shell.eq("cmd") {
-                return CmdOptions {
+                CmdOptions {
                     detached,
                     program: shell,
                     args: vec!["/C"],
@@ -102,9 +102,9 @@ where
                     timeout,
                 }
                 .run_with_raw(command)
-                .await;
+                .await
             } else if shell.eq("powershell") {
-                return CmdOptions {
+                CmdOptions {
                     detached,
                     program: shell,
                     args: vec!["-NonInteractive".into(), "-NoProfile".into(), command],
@@ -112,9 +112,9 @@ where
                     timeout,
                 }
                 .run()
-                .await;
+                .await
             } else {
-                return Err(Error::UnsupportedShell(shell.to_string_lossy().to_string()));
+                Err(Error::UnsupportedShell(shell.to_string_lossy().to_string()))
             }
         }
         #[cfg(not(windows))]
@@ -213,7 +213,7 @@ where
             timeout,
         } = self;
 
-        return CmdOptions {
+        CmdOptions {
             detached,
             program: exe,
             args,
@@ -221,7 +221,7 @@ where
             timeout,
         }
         .run()
-        .await;
+        .await
     }
 }
 
@@ -242,7 +242,7 @@ where
 pub enum ScriptMode {
     PowerShell,
     Python { bin: PathBuf },
-    CMD,
+    Cmd,
     Directly,
 }
 
@@ -251,7 +251,7 @@ impl ScriptMode {
         match self {
             ScriptMode::PowerShell => ".ps1",
             ScriptMode::Python { .. } => ".py",
-            ScriptMode::CMD => ".bat",
+            ScriptMode::Cmd => ".bat",
             ScriptMode::Directly => "",
         }
     }
@@ -300,7 +300,7 @@ where
                                 tmp.extend_from_slice(&args);
                                 tmp
                             }
-                            ScriptMode::CMD => args,
+                            ScriptMode::Cmd => args,
                             ScriptMode::Directly => args,
                         }
                     },
@@ -308,7 +308,7 @@ where
                         match mode {
                             ScriptMode::PowerShell => get_powershell_exe(),
                             ScriptMode::Python { bin } => bin,
-                            ScriptMode::CMD => get_cmd_exe(),
+                            ScriptMode::Cmd => get_cmd_exe(),
                             ScriptMode::Directly => temp_file_path.to_path_buf(),
                         }
                     },
