@@ -4,7 +4,7 @@ use tokio::process::Command;
 
 use crate::error::Error;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug)]
 pub struct CmdOptions<P = String, A = String, K = String, V = String> {
     /// have a child process that is in a different process group so that
     /// parent terminating doesn't kill child
@@ -70,7 +70,7 @@ where
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug)]
 pub struct CmdShell<S = String, C = String> {
     pub shell: S,
     pub command: C,
@@ -192,7 +192,7 @@ where
 //     }
 // }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug)]
 pub struct CmdExe<E = String, A = String> {
     pub exe: E,
     pub args: Vec<A>,
@@ -225,7 +225,7 @@ where
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug)]
 pub struct CmdScript<K = String, V = String>
 where
     K: std::cmp::Eq + std::hash::Hash,
@@ -238,11 +238,14 @@ where
     pub timeout: Duration,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, Default)]
 pub enum ScriptMode {
     PowerShell,
-    Python { bin: PathBuf },
+    Python {
+        bin: PathBuf,
+    },
     Cmd,
+    #[default]
     Directly,
 }
 

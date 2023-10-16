@@ -90,15 +90,20 @@ pub enum NatsMsg {
     RawCmd {
         shell: String,
         command: String,
+        #[serde(default = "default_timeout")]
         timeout: Duration,
         // run_as_user: bool,
     },
     RunScript {
         code: String,
+        #[serde(default)]
         mode: ScriptMode,
+        #[serde(default)]
         script_args: Vec<String>,
+        #[serde(default = "default_timeout")]
         timeout: Duration,
         // run_as_user: bool,
+        #[serde(default)]
         env_vars: HashMap<String, String>,
         id: i32,
     },
@@ -112,6 +117,10 @@ pub enum NatsMsg {
     CpuLoadAvg,
     CpuUssage,
     PublicIp,
+}
+
+fn default_timeout() -> Duration {
+    Duration::from_secs(15)
 }
 
 impl NatsMsg {
@@ -432,9 +441,10 @@ impl Ironhive {
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "lowercase")]
 #[serde(tag = "resp")]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub enum NatsResp {
     Pong,
     ProcessMsg {
