@@ -7,8 +7,7 @@ use windows::{
         Security::SC_HANDLE,
         System::Services::{
             CloseServiceHandle, EnumServicesStatusExW, OpenSCManagerW, OpenServiceW,
-            QueryServiceConfig2W, QueryServiceConfigW,
-            QueryServiceStatusEx,
+            QueryServiceConfig2W, QueryServiceConfigW, QueryServiceStatusEx,
             ENUM_SERVICE_STATUS_PROCESSW, QUERY_SERVICE_CONFIGW, SC_ENUM_PROCESS_INFO,
             SC_MANAGER_ALL_ACCESS, SC_STATUS_PROCESS_INFO, SERVICE_ALL_ACCESS, SERVICE_CONFIG,
             SERVICE_CONFIG_DELAYED_AUTO_START_INFO, SERVICE_CONFIG_DESCRIPTION,

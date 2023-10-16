@@ -12,14 +12,14 @@ pub struct ProcessMsg {
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct RawCMDResp {
-    pub results: String 
+    pub results: String,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
-pub struct  RunScriptResp  {
-	pub stdout: String,
-	pub stderr: String,
-	pub retcode: i32,
-	pub execution_time: Duration,
-	pub id: i32,
+pub struct RunScriptResp {
+    pub stdout: String,
+    pub stderr: String,
+    pub retcode: i32,
+    pub execution_time: Duration,
+    pub id: i32,
 }

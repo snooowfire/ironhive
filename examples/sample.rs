@@ -7,7 +7,7 @@ async fn main() -> Result<(), ironhive::Error> {
         .with_level(true)
         .with_max_level(Level::DEBUG)
         .init();
-    
+
     let agent_id = uuid::Uuid::new_v4();
 
     info!("agent id: {}", agent_id.to_string());

@@ -23,7 +23,7 @@ impl TempFile {
         &self.path
     }
 
-    pub async fn new(prefix: &str,content: impl AsRef<[u8]>) -> Result<Self, Error> {
+    pub async fn new(prefix: &str, content: impl AsRef<[u8]>) -> Result<Self, Error> {
         let base = std::env::temp_dir();
         tokio::fs::create_dir_all(&base).await?;
 
@@ -36,11 +36,12 @@ impl TempFile {
             match tokio::fs::File::create(&path).await {
                 Ok(mut f) => {
                     f.write_all(content.as_ref()).await?;
-                    return Ok(Self { path })},
+                    return Ok(Self { path });
+                }
                 Err(err) if n_try == 1024 => {
                     error!("create tempfile {path:?} failed: {err}");
                     return Err(Error::TokioIoError(err));
-                },
+                }
                 Err(_) => n_try += 1,
             }
         }
