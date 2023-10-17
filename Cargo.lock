@@ -723,6 +723,7 @@ dependencies = [
  "futures",
  "futures-util",
  "humansize",
+ "nats-server",
  "reqwest",
  "serde",
  "serde_json",
@@ -850,6 +851,20 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "tempfile",
+]
+
+[[package]]
+name = "nats-server"
+version = "0.1.0"
+source = "git+https://github.com/nats-io/nats.rs.git?tag=async-nats/v0.32.1#155936e2c646dc89193ef126e1a5c463d3ad9469"
+dependencies = [
+ "lazy_static",
+ "nuid",
+ "rand",
+ "regex",
+ "serde_json",
+ "tokio-retry",
+ "url",
 ]
 
 [[package]]

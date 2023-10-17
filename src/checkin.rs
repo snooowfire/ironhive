@@ -5,26 +5,18 @@ use sysinfo::SystemExt;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, Clone, Copy)]
 pub enum AgentMode {
+    #[serde(rename = "agent-hello")]
     Hello,
+    #[serde(rename = "agent-winsvc")]
     WinSvc,
+    #[serde(rename = "agent-agentinfo")]
     AgentInfo,
+    #[serde(rename = "agent-wmi")]
     WMI,
+    #[serde(rename = "agent-disks")]
     Disks,
+    #[serde(rename = "agent-publicip")]
     PublicIp,
-}
-
-impl ToString for AgentMode {
-    fn to_string(&self) -> String {
-        match self {
-            AgentMode::Hello => "agent-hello",
-            AgentMode::WinSvc => "agent-winsvc",
-            AgentMode::AgentInfo => "agent-agentinfo",
-            AgentMode::WMI => "agent-wmi",
-            AgentMode::Disks => "agent-disks",
-            AgentMode::PublicIp => "agent-publicip",
-        }
-        .into()
-    }
 }
 
 impl AgentMode {
@@ -127,8 +119,7 @@ impl super::Agent {
         }?;
 
         client
-            .publish_with_reply(
-                self.agent_id.clone(),
+            .publish(
                 serde_json::to_string(&mode).unwrap(),
                 writer.into_inner().freeze(),
             )

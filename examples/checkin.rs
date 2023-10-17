@@ -34,9 +34,12 @@ async fn do_nats_check_in(
     agent_id: uuid::Uuid,
     client: &async_nats::Client,
 ) -> Result<(), ironhive::Error> {
-    for (reply, m) in
-        AgentMode::all().map(|mode| (mode.to_string(), ironhive::NatsMsg::Checkin { mode }))
-    {
+    for (reply, m) in AgentMode::all().map(|mode| {
+        (
+            serde_json::to_string(&mode).unwrap(),
+            ironhive::NatsMsg::Checkin { mode },
+        )
+    }) {
         client
             .publish_with_reply(agent_id.to_string(), reply, m.as_bytes())
             .await?

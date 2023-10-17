@@ -9,6 +9,8 @@ mod shared;
 #[allow(dead_code)]
 mod svc;
 mod temp_file;
+#[cfg(test)]
+mod tests;
 mod utils;
 #[cfg(windows)]
 #[allow(clippy::upper_case_acronyms)]

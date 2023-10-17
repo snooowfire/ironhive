@@ -7,6 +7,8 @@ pub enum Error {
     NotFoundNatsConnectOptions,
     #[error("err pattern has separator: '/'")]
     PatternHasSeparator,
+    #[error("No reply subject to reply to")]
+    NoReplySubject,
     #[error("io error: {0}")]
     TokioIoError(#[from] tokio::io::Error),
     #[error("timeout: {0}")]

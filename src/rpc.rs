@@ -11,7 +11,7 @@ use async_nats::ConnectOptions;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use sysinfo::PidExt;
-use tracing::{debug, error, trace, warn};
+use tracing::{debug, error, trace};
 
 pub struct Ironhive {
     pub client: async_nats::Client,
@@ -30,14 +30,11 @@ impl<'c> NatsClient<'c> {
 
     async fn respond(&self, msg: async_nats::Message, resp: &NatsResp) -> Result<(), Error> {
         if let Some(reply) = msg.reply {
-            self.client
-                .publish_with_reply(msg.subject, reply, resp.as_bytes())
-                .await?;
+            self.client.publish(reply, resp.as_bytes()).await?;
+            Ok(())
         } else {
-            warn!("Unknow reply msg: {msg:#?}");
-            self.client.publish(msg.subject, resp.as_bytes()).await?;
+            Err(Error::NoReplySubject)
         }
-        Ok(())
     }
 
     async fn respond_res(
@@ -48,11 +45,9 @@ impl<'c> NatsClient<'c> {
         match resp {
             Ok(payload) => {
                 if let Some(reply) = msg.reply {
-                    self.client
-                        .publish_with_reply(msg.subject, reply, payload.as_bytes())
-                        .await
+                    self.client.publish(reply, payload.as_bytes()).await
                 } else {
-                    self.client.publish(msg.subject, payload.as_bytes()).await
+                    return Err(Error::NoReplySubject);
                 }
             }
             Err(err) => {
@@ -64,12 +59,10 @@ impl<'c> NatsClient<'c> {
                 );
                 if let Some(reply) = msg.reply {
                     self.client
-                        .publish_with_reply_and_headers(msg.subject, reply, headers, "".into())
+                        .publish_with_headers(reply, headers, "".into())
                         .await
                 } else {
-                    self.client
-                        .publish_with_headers(msg.subject, headers, "".into())
-                        .await
+                    return Err(Error::NoReplySubject);
                 }
             }
         }?;
@@ -160,6 +153,7 @@ impl Ironhive {
     }
 
     pub async fn run(self) -> Result<(), Error> {
+        trace!("start run.");
         let Self {
             client,
             mut subscriber,
@@ -310,7 +304,9 @@ impl Ironhive {
                             if let Err(e) = nats_client
                                 .respond(
                                     msg,
-                                    &NatsResp::NeedsReboot(agent.system_reboot_required().await),
+                                    &NatsResp::NeedsReboot {
+                                        needs: agent.system_reboot_required().await,
+                                    },
                                 )
                                 .await
                             {
@@ -461,7 +457,9 @@ pub enum NatsResp {
         execution_time: Duration,
         id: i32,
     },
-    NeedsReboot(bool),
+    NeedsReboot {
+        needs: bool,
+    },
     CpuLoadAvg {
         /// Average load within one minute.
         one: f64,
