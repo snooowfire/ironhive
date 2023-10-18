@@ -2,14 +2,14 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct CheckInNats {
     pub agent_id: String,
     pub version: String,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct AgentInfoNats {
     pub agent_id: String,
@@ -26,7 +26,7 @@ pub struct AgentInfoNats {
     pub arch: String,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinSvcNats {
     pub agent_id: String,
@@ -34,7 +34,7 @@ pub struct WinSvcNats {
     pub win_svcs: Vec<WindowsService>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WindowsService {
     pub name: String,
@@ -50,21 +50,21 @@ pub struct WindowsService {
     pub delayed_auto_start: bool,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinWMINats {
     pub agent_id: String,
     pub wmi: serde_json::Value, // Use serde_json::Value for dynamic deserialization
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinDisksNats {
     pub agent_id: String,
     pub disks: Vec<Disk>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct Disk {
     pub device: String,
@@ -75,14 +75,14 @@ pub struct Disk {
     pub percent: i32,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct PublicIPNats {
     pub agent_id: String,
     pub public_ip: String,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinSoftwareList {
     pub name: String,
@@ -95,7 +95,7 @@ pub struct WinSoftwareList {
     pub uninstall: String,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WinSoftwareNats {
     pub agent_id: String,

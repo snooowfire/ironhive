@@ -45,12 +45,11 @@ wmi = "0.13"
 
 [dev-dependencies]
 tracing-test = "0.2"
-tokio = { version = "1.25", features = ["rt-multi-thread"] }
+nats-server = { git = "https://github.com/nats-io/nats.rs.git", tag = "async-nats/v0.32.1" }
 uuid = { version = "1.4", features = ["v4", "fast-rng", "macro-diagnostics"] }
 tracing-subscriber = "0.3"
-nats-server = { git = "https://github.com/nats-io/nats.rs.git", tag = "async-nats/v0.32.1" }
-
 
 [features]
 default = []
 deserialize = []
+test = ["tokio/rt-multi-thread"]

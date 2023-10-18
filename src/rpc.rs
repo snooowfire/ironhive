@@ -268,6 +268,7 @@ impl Ironhive {
                                 timeout,
                             };
                             let res = cmd_script.run().await;
+                            debug!("{res:#?}");
                             let execution_time = std::time::Instant::now() - now;
 
                             if let Err(e) = nats_client
@@ -278,7 +279,7 @@ impl Ironhive {
                                         |resp| NatsResp::RunScriptResp {
                                             stdout: String::from_utf8_lossy(&resp.stdout)
                                                 .to_string(),
-                                            stderr: String::from_utf8_lossy(&resp.stdout)
+                                            stderr: String::from_utf8_lossy(&resp.stderr)
                                                 .to_string(),
                                             retcode: resp.status.code().unwrap_or(85),
                                             execution_time,
@@ -341,13 +342,16 @@ impl Ironhive {
                             }
                         }
                         NatsMsg::WMI => {
-                            if let Err(e) = agent
+                            let res = agent
                                 .nats_message(
                                     AgentMode::WMI,
                                     client,
                                     #[cfg(windows)]
                                     wmi,
                                 )
+                                .await;
+                            if let Err(e) = nats_client
+                                .respond_res(msg, &NatsResp::ok(res, |_| 0))
                                 .await
                             {
                                 error!("Get WMI info failed: {e:?}");
