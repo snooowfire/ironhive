@@ -11,13 +11,6 @@ mod deserialize {
     use tracing::{debug, info};
     use tracing_test::traced_test;
 
-    #[derive(serde::Serialize, serde::Deserialize, Debug)]
-    #[serde(untagged)]
-    enum Data {
-        Ok(NatsResp),
-        Err(()),
-    }
-
     #[traced_test]
     #[tokio::test(flavor = "multi_thread")]
     async fn basic() {
