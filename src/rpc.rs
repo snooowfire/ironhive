@@ -83,6 +83,7 @@ pub enum NatsMsg {
     RawCmd {
         shell: String,
         command: String,
+        #[serde(with = "humantime_serde")]
         #[serde(default = "default_timeout")]
         timeout: Duration,
         // run_as_user: bool,
@@ -93,6 +94,7 @@ pub enum NatsMsg {
         mode: ScriptMode,
         #[serde(default)]
         script_args: Vec<String>,
+        #[serde(with = "humantime_serde")]
         #[serde(default = "default_timeout")]
         timeout: Duration,
         // run_as_user: bool,
@@ -458,6 +460,7 @@ pub enum NatsResp {
         stdout: String,
         stderr: String,
         retcode: i32,
+        #[serde(with = "humantime_serde")]
         execution_time: Duration,
         id: i32,
     },

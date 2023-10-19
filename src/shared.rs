@@ -23,6 +23,7 @@ pub struct RunScriptResp {
     pub stdout: String,
     pub stderr: String,
     pub retcode: i32,
+    #[serde(with = "humantime_serde")]
     pub execution_time: Duration,
     pub id: i32,
 }

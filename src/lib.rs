@@ -19,6 +19,7 @@ mod wmi;
 pub use agent::Agent;
 pub use agent_info::*;
 pub use checkin::AgentMode;
+pub use cmd::ScriptMode;
 pub use error::Error;
 pub use rpc::*;
 pub use shared::*;

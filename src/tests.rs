@@ -139,6 +139,7 @@ mod deserialize {
 
             for _ in 0..len {
                 let raw_resp = subscriber.next().await.unwrap();
+                debug!("{raw_resp:#?}");
                 let resp = serde_json::from_slice::<NatsResp>(&raw_resp.payload).unwrap();
                 assert!(matches!(resp, NatsResp::Ok));
             }
@@ -292,7 +293,18 @@ mod deserialize {
             .map(|p| p.name())
             .unwrap();
 
-        assert_eq!(name, "nats-server");
+        let expect_name = {
+            #[cfg(windows)]
+            {
+                "nats-server.exe"
+            }
+            #[cfg(not(windows))]
+            {
+                "nats-server"
+            }
+        };
+
+        assert_eq!(name, expect_name);
 
         let req = tokio::spawn(async move {
             let msgs = [
@@ -366,9 +378,9 @@ mod deserialize {
 
             check_resp!(
                 "ironhive" = NatsResp::Ok,
-                "cmd" = NatsResp::RawCMDResp { .. } in "io error: No such file or directory" => "cargo -Z help",
-                "powershell" = NatsResp::RawCMDResp { .. } in "io error: No such file or directory" => "cargo -Z help",
-                "bash" = NatsResp::RawCMDResp { .. } in "io error: No such file or directory" => "cargo -Z help"
+                "cmd" = NatsResp::RawCMDResp { .. } in "io error" => "cargo -Z help",
+                "powershell" = NatsResp::RawCMDResp { .. } in "io error" => "cargo -Z help",
+                "bash" = NatsResp::RawCMDResp { .. } in "unsupported shell" => "cargo -Z help"
             );
         };
 

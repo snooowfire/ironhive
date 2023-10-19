@@ -28,6 +28,7 @@ humansize = "2.1"
 bytes = { version = "1.5", features = ["serde"] }
 whoami = "1.4"
 async-scoped = { version = "0.7", features = ["use-tokio"] }
+humantime-serde = "1.1"
 
 [target."cfg(target_os = \"windows\")".dependencies]
 winreg = "0.51"
@@ -40,6 +41,7 @@ windows = { version = "0.51", features = [
     "Win32_System_Com",
     "Win32_System_Registry",
     "Win32_UI_Shell",
+    "Win32_System_Memory"
 ] }
 wmi = "0.13"
 
@@ -48,6 +50,9 @@ tracing-test = "0.2"
 nats-server = { git = "https://github.com/nats-io/nats.rs.git", tag = "async-nats/v0.32.1" }
 uuid = { version = "1.4", features = ["v4", "fast-rng", "macro-diagnostics"] }
 tracing-subscriber = "0.3"
+xshell = "0.2"
+anyhow = "1.0"
+clap = { version = "4.4", features = ["derive"] }
 
 [features]
 default = []

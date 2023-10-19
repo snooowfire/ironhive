@@ -132,66 +132,6 @@ where
     }
 }
 
-// #[derive(Debug, serde::Serialize, serde::Deserialize)]
-// pub struct CmdArgs<S = String, A = String> {
-//     pub shell: S,
-//     pub cmd_args: Vec<A>,
-//     pub detached: bool,
-//     pub timeout: Duration,
-// }
-
-// impl<S, A> CmdArgs<S, A>
-// where
-//     S: AsRef<OsStr> + for<'s> From<&'s str>,
-//     A: AsRef<OsStr> + for<'s> From<&'s str> + Clone,
-// {
-//     pub async fn run(self) -> Result<Output, Error> {
-//         let Self {
-//             shell,
-//             cmd_args,
-//             detached,
-//             timeout,
-//         } = self;
-//         #[cfg(windows)]
-//         {
-//             let shell = shell.as_ref();
-//             let (program, args) = if shell.eq("cmd") {
-//                 let mut args = vec!["/C".into()];
-//                 args.extend_from_slice(&cmd_args);
-//                 (get_cmd_exe(), args)
-//             } else if shell.eq("powershell") {
-//                 let mut args = vec!["-NonInteractive".into(), "-NoProfile".into()];
-//                 args.extend_from_slice(&cmd_args);
-//                 (get_powershell_exe(), args)
-//             } else {
-//                 return Err(Error::UnsupportedShell(shell.to_string_lossy().to_string()));
-//             };
-
-//             return CmdOptions {
-//                 detached,
-//                 program,
-//                 args,
-//                 env_vars: empty_vec(),
-//                 timeout,
-//             }
-//             .run()
-//             .await;
-//         }
-//         #[cfg(not(windows))]
-//         {
-//             return CmdOptions {
-//                 detached,
-//                 program: shell,
-//                 args: cmd_args,
-//                 env_vars: empty_vec(),
-//                 timeout,
-//             }
-//             .run()
-//             .await;
-//         }
-//     }
-// }
-
 #[derive(Debug)]
 pub struct CmdExe<E = String, A = String> {
     pub exe: E,

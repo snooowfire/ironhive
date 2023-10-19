@@ -34,7 +34,7 @@ pub struct WinSvcNats {
     pub win_svcs: Vec<WindowsService>,
 }
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Default)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WindowsService {
     pub name: String,

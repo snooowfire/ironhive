@@ -1,22 +1,24 @@
+use std::mem;
+
 use crate::{error::Error, WindowsService};
-use tracing::error;
+use tracing::{debug, error};
 use windows::{
     core::{HSTRING, PCWSTR, PWSTR},
     Win32::{
-        Foundation::{ERROR_INSUFFICIENT_BUFFER, ERROR_MORE_DATA, WIN32_ERROR},
         Security::SC_HANDLE,
         System::Services::{
             CloseServiceHandle, EnumServicesStatusExW, OpenSCManagerW, OpenServiceW,
-            QueryServiceConfig2W, QueryServiceConfigW, QueryServiceStatusEx,
-            ENUM_SERVICE_STATUS_PROCESSW, QUERY_SERVICE_CONFIGW, SC_ENUM_PROCESS_INFO,
-            SC_MANAGER_ALL_ACCESS, SC_STATUS_PROCESS_INFO, SERVICE_ALL_ACCESS, SERVICE_CONFIG,
-            SERVICE_CONFIG_DELAYED_AUTO_START_INFO, SERVICE_CONFIG_DESCRIPTION,
-            SERVICE_CONFIG_SERVICE_SID_INFO, SERVICE_DELAYED_AUTO_START_INFO, SERVICE_DESCRIPTIONW,
-            SERVICE_STATE_ALL, SERVICE_STATUS_PROCESS, SERVICE_WIN32,
+            QueryServiceConfigW, QueryServiceStatusEx, ENUM_SERVICE_STATUS_PROCESSW,
+            QUERY_SERVICE_CONFIGW, SC_ENUM_PROCESS_INFO, SC_MANAGER_ALL_ACCESS,
+            SC_STATUS_PROCESS_INFO, SERVICE_ALL_ACCESS, SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
+            SERVICE_CONFIG_DESCRIPTION, SERVICE_CONFIG_SERVICE_SID_INFO,
+            SERVICE_DELAYED_AUTO_START_INFO, SERVICE_DESCRIPTIONW, SERVICE_STATE_ALL,
+            SERVICE_STATUS_PROCESS, SERVICE_WIN32,
         },
     },
 };
 
+#[derive(Debug)]
 struct Mgr {
     handle: SC_HANDLE,
 }
@@ -63,82 +65,89 @@ struct Config {
     delayed_auto_start: bool,
 }
 
+macro_rules! query_service_config2 {
+    ($($name:ident + $info_level:ident => $tp: ty),*) => {
+        $(
+            fn $name(&self) -> Result<$tp,Error> {
+                let mut bytes_needed = 0;
+                _ = unsafe { windows::Win32::System::Services::QueryServiceConfig2W(self.handle, $info_level, None, &mut bytes_needed) };
+                let mut raw_config = vec![0;bytes_needed as usize];
+                unsafe { windows::Win32::System::Services::QueryServiceConfig2W(self.handle, $info_level, Some(&mut raw_config[..]), &mut bytes_needed) }?;
+                let config = unsafe { *(raw_config.as_mut_ptr() as *mut $tp) };
+                Ok(config)
+            }
+        )*
+    };
+}
+
 impl Service {
-    fn query_service_config2(&self, info_level: SERVICE_CONFIG) -> Result<Vec<u8>, Error> {
-        let mut n = 1024;
-        let mut b = Vec::new();
-        loop {
-            match unsafe { QueryServiceConfig2W(self.handle, info_level, Some(&mut b), &mut n) } {
-                Ok(_) => return Ok(b),
-                Err(e)
-                    if WIN32_ERROR::from_error(&e)
-                        .filter(|code| ERROR_INSUFFICIENT_BUFFER != *code)
-                        .is_some()
-                        || n <= b.len() as u32 =>
-                {
-                    return Err(Error::WindowsError(e));
-                }
-                Err(_) => {
-                    b.resize(n as usize, 0);
-                }
-            }
-        }
+    query_service_config2! {
+        query_delayed_auto_start_info + SERVICE_CONFIG_DELAYED_AUTO_START_INFO => SERVICE_DELAYED_AUTO_START_INFO,
+        query_sid_type + SERVICE_CONFIG_SERVICE_SID_INFO => u32,
+        query_description + SERVICE_CONFIG_DESCRIPTION => SERVICE_DESCRIPTIONW
     }
+
     fn config(&self) -> Result<Config, Error> {
-        let mut p = QUERY_SERVICE_CONFIGW::default();
-        let mut n = 1024;
-        loop {
-            if let Err(e) = unsafe { QueryServiceConfigW(self.handle, Some(&mut p), n, &mut n) } {
-                if WIN32_ERROR::from_error(&e)
-                    .filter(|code| ERROR_INSUFFICIENT_BUFFER != *code)
-                    .is_some()
-                    || n <= std::mem::size_of::<QUERY_SERVICE_CONFIGW>() as u32
-                {
-                    return Err(Error::WindowsError(e));
-                }
-                continue;
-            }
-            break;
-        }
+        let mut bytes_needed = 0;
 
-        let mut b = self.query_service_config2(SERVICE_CONFIG_DESCRIPTION)?;
-        let p2 = unsafe { *(b.as_mut_ptr() as *mut SERVICE_DESCRIPTIONW) };
-        let mut b = self.query_service_config2(SERVICE_CONFIG_DELAYED_AUTO_START_INFO)?;
-        let p3 = unsafe { *(b.as_mut_ptr() as *mut SERVICE_DELAYED_AUTO_START_INFO) };
-        let delayed_start = p3.fDelayedAutostart;
+        _ = unsafe { QueryServiceConfigW(self.handle, None, 0, &mut bytes_needed) };
 
-        let mut b = self.query_service_config2(SERVICE_CONFIG_SERVICE_SID_INFO)?;
-        let sid_type = unsafe { *(b.as_mut_ptr() as *mut u32) };
+        let mut raw_config = unsafe { mem::zeroed::<QUERY_SERVICE_CONFIGW>() };
 
-        Ok(Config {
-            service_type: p.dwServiceType.0,
-            start_type: p.dwStartType.0,
-            error_control: p.dwErrorControl.0,
-            binary_path_name: p.lpBinaryPathName,
-            load_order_group: p.lpLoadOrderGroup,
-            tag_id: p.dwTagId,
-            dependencies: p.lpDependencies,
-            service_start_name: p.lpServiceStartName,
-            display_name: p.lpDisplayName,
+        unsafe {
+            QueryServiceConfigW(
+                self.handle,
+                Some(&mut raw_config),
+                bytes_needed,
+                &mut bytes_needed,
+            )
+        }?;
+
+        let description = self.query_description()?;
+
+        let delayed_auto_start_info = self.query_delayed_auto_start_info()?;
+
+        let sid_type = self.query_sid_type()?;
+
+        let config = Config {
+            service_type: raw_config.dwServiceType.0,
+            start_type: raw_config.dwStartType.0,
+            error_control: raw_config.dwErrorControl.0,
+            binary_path_name: raw_config.lpBinaryPathName,
+            load_order_group: raw_config.lpLoadOrderGroup,
+            tag_id: raw_config.dwTagId,
+            dependencies: raw_config.lpDependencies,
+            service_start_name: raw_config.lpServiceStartName,
+            display_name: raw_config.lpDisplayName,
             password: PWSTR::null(),
-            description: p2.lpDescription,
+            description: description.lpDescription,
             sid_type,
-            delayed_auto_start: delayed_start.as_bool(),
-        })
+            delayed_auto_start: delayed_auto_start_info.fDelayedAutostart.as_bool(),
+        };
+
+        debug!("query config ok: {config:?}");
+
+        Ok(config)
     }
+
     fn query(&self) -> Result<Status, Error> {
-        let mut needed = 0;
-        let mut t = Vec::new();
+        let mut bytes_needed = 0;
+        _ = unsafe {
+            QueryServiceStatusEx(self.handle, SC_STATUS_PROCESS_INFO, None, &mut bytes_needed)
+        };
+
+        let mut buffer = vec![0; bytes_needed as usize];
+
         unsafe {
             QueryServiceStatusEx(
                 self.handle,
                 SC_STATUS_PROCESS_INFO,
-                Some(&mut t),
-                &mut needed,
+                Some(&mut buffer),
+                &mut bytes_needed,
             )
         }?;
 
-        let statu = unsafe { *(t.as_mut_ptr() as *mut SERVICE_STATUS_PROCESS) };
+        let statu = unsafe { *(buffer.as_mut_ptr() as *mut SERVICE_STATUS_PROCESS) };
 
         Ok(Status {
             state: statu.dwCurrentState.0,
@@ -146,7 +155,6 @@ impl Service {
             process_id: statu.dwProcessId,
             win32_exit_code: statu.dwWin32ExitCode,
             service_specific_exit_code: statu.dwServiceSpecificExitCode,
-            // TODO: 這兩個在原先的query裏是沒有設置的
             check_point: statu.dwCheckPoint,
             wait_hint: statu.dwWaitHint,
         })
@@ -163,69 +171,70 @@ impl Drop for Service {
 
 impl Mgr {
     fn connect() -> Result<Self, Error> {
-        let handle = unsafe { OpenSCManagerW(None, None, SC_MANAGER_ALL_ACCESS) }?;
+        let handle = unsafe { OpenSCManagerW(PCWSTR::null(), None, SC_MANAGER_ALL_ACCESS) }?;
+        debug!("connect well");
         Ok(Mgr { handle })
     }
 
     fn open_service(&self, name: PCWSTR) -> Result<Service, Error> {
+        debug!("start open_service {name:?}");
+
         let handle = unsafe { OpenServiceW(self.handle, name, SERVICE_ALL_ACCESS) }?;
+
+        debug!("open_service well");
         Ok(Service { name, handle })
     }
 
     fn list_services(&self) -> Result<Vec<PCWSTR>, Error> {
-        let mut p = Vec::new();
-        let mut bytes_needed = 0;
-        let mut services_returned = 0;
-        loop {
-            match unsafe {
-                EnumServicesStatusExW(
-                    self.handle,
-                    SC_ENUM_PROCESS_INFO,
-                    SERVICE_WIN32,
-                    SERVICE_STATE_ALL,
-                    Some(&mut p),
-                    &mut bytes_needed,
-                    &mut services_returned,
-                    None,
-                    None,
-                )
-            } {
-                Ok(_) => {
-                    break;
-                }
-                Err(e)
-                    if WIN32_ERROR::from_error(&e)
-                        .filter(|code| ERROR_MORE_DATA == *code)
-                        .is_some()
-                        || bytes_needed <= p.len() as u32 =>
-                {
-                    return Err(Error::WindowsError(e));
-                }
-                Err(_) => {
-                    p.resize(bytes_needed as usize, 0);
-                }
-            }
-        }
+        let mut bytes_needed = unsafe { mem::zeroed::<u32>() };
+        let mut services_returned = unsafe { mem::zeroed::<u32>() };
+
+        _ = unsafe {
+            EnumServicesStatusExW(
+                self.handle,
+                SC_ENUM_PROCESS_INFO,
+                SERVICE_WIN32,
+                SERVICE_STATE_ALL,
+                None,
+                &mut bytes_needed,
+                &mut services_returned,
+                None,
+                None,
+            )
+        };
+
+        let mut raw_services = vec![0; bytes_needed as usize];
+
+        unsafe {
+            EnumServicesStatusExW(
+                self.handle,
+                SC_ENUM_PROCESS_INFO,
+                SERVICE_WIN32,
+                SERVICE_STATE_ALL,
+                Some(&mut raw_services),
+                &mut bytes_needed,
+                &mut services_returned,
+                None,
+                None,
+            )
+        }?;
 
         if services_returned == 0 {
             return Ok(vec![]);
         }
 
-        let services = unsafe {
-            from_raw_parts_mut::<ENUM_SERVICE_STATUS_PROCESSW>(&mut p, services_returned)
-        };
+        let ptr = raw_services.as_mut_ptr() as *mut ENUM_SERVICE_STATUS_PROCESSW;
+        let len = services_returned as usize;
+
+        let services = unsafe { std::slice::from_raw_parts_mut(ptr, len) };
+
+        debug!("list_services well");
 
         Ok(services
             .iter_mut()
             .map(|s| PCWSTR::from_raw(s.lpServiceName.as_ptr()))
             .collect())
     }
-}
-
-unsafe fn from_raw_parts_mut<T>(p: &mut [u8], services_returned: u32) -> &mut [T] {
-    let ptr = p.as_mut_ptr() as *mut T;
-    let len = services_returned as usize;
-    std::slice::from_raw_parts_mut(ptr, len)
 }
 
 impl Drop for Mgr {
@@ -260,6 +269,7 @@ fn service_status_text(num: u32) -> String {
     }
     .into()
 }
+
 fn service_start_type(num: u32) -> String {
     match num {
         0 => "Boot",
@@ -274,37 +284,66 @@ fn service_start_type(num: u32) -> String {
 }
 
 pub fn get_service() -> Result<Vec<WindowsService>, Error> {
+    debug!("start get_service");
     let conn = Mgr::connect()?;
+    debug!("create conn fine.");
     let svcs = conn.list_services()?;
+    debug!("list services fine: {svcs:?}");
     let res = svcs
         .into_iter()
-        .filter_map(|s| {
-            let handle = || -> Result<WindowsService, Error> {
-                let srv = conn.open_service(s)?;
-                let q = srv.query()?;
-                let config = srv.config()?;
-                Ok(unsafe {
-                    WindowsService {
-                        name: s.to_string()?,
-                        status: service_status_text(q.state),
-                        display_name: config.display_name.to_string()?,
-                        bin_path: config.binary_path_name.to_string()?,
-                        description: config.description.to_string()?,
-                        username: config.service_start_name.to_string()?,
-                        pid: q.process_id,
-                        start_type: service_start_type(config.start_type),
-                        delayed_auto_start: config.delayed_auto_start,
-                    }
-                })
-            };
-            match handle() {
-                Ok(res) => Some(res),
-                Err(e) => {
-                    error!("get service error: {e:?}");
-                    None
-                }
-            }
-        })
+        .filter_map(|s| get_config(&conn, s).ok())
         .collect();
+    debug!("get_service well..");
     Ok(res)
+}
+
+fn get_config(conn: &Mgr, service: PCWSTR) -> Result<WindowsService, Error> {
+    debug!("will get {service:?} config");
+    let srv = conn.open_service(service)?;
+    let q = srv.query()?;
+    let config = srv.config()?;
+    debug!("get config {config:?}");
+    debug!("{} live!", unsafe { service.display() });
+    Ok(unsafe {
+        WindowsService {
+            name: service.to_string()?,
+            status: service_status_text(q.state),
+            display_name: config.display_name.to_string()?,
+            bin_path: config.binary_path_name.to_string()?,
+            // TODO: 奇怪的bug，调用to_string就崩溃
+            // description: config.description.to_string()?,
+            username: config.service_start_name.to_string()?,
+            pid: q.process_id,
+            start_type: service_start_type(config.start_type),
+            delayed_auto_start: config.delayed_auto_start,
+            ..Default::default()
+        }
+    })
+}
+
+#[test]
+#[tracing_test::traced_test]
+fn test_get_config() {
+    let conn = Mgr::connect().unwrap();
+    let svrs = conn.list_services().unwrap();
+    for svc in svrs {
+        // let wide = unsafe { svc.to_string() };
+        // println!("will handle {:?}", wide);
+
+        let config = get_config(&conn, svc);
+        println!("config: {config:?}");
+    }
+}
+
+#[test]
+#[tracing_test::traced_test]
+fn test_get_service() {
+    let service = get_service();
+    assert!(service.is_ok());
+}
+
+#[test]
+fn test_mgr() {
+    let mgr = Mgr::connect();
+    println!("{mgr:?}");
 }
