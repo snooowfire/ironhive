@@ -483,9 +483,22 @@ print(f"The value of the {n}th term in the Fibonacci sequence is: {result}")
             let raw_resp = subscriber.next().await.unwrap();
             let resp = serde_json::from_slice::<NatsResp>(&raw_resp.payload).unwrap();
             assert!(matches!(resp, NatsResp::RunScriptResp { .. }));
+
+            fn handle_resp(stdout: String, id: i32) {
+                if id == 1 {
+                    assert_eq!(stdout.trim(), "hi from ironhive!");
+                } else if id == 2 {
+                    assert_eq!(
+                        stdout.trim(),
+                        "The value of the 10th term in the Fibonacci sequence is: 34"
+                    );
+                } else {
+                    panic!("Unknow resp");
+                }
+            }
+
             if let NatsResp::RunScriptResp { stdout, id, .. } = resp {
-                assert_eq!(stdout.trim(), "hi from ironhive!");
-                assert_eq!(id, 1);
+                handle_resp(stdout, id)
             }
 
             let raw_resp = subscriber.next().await.unwrap();
@@ -493,11 +506,7 @@ print(f"The value of the {n}th term in the Fibonacci sequence is: {result}")
             assert!(matches!(resp, NatsResp::RunScriptResp { .. }));
             debug!("{resp:#?}");
             if let NatsResp::RunScriptResp { stdout, id, .. } = resp {
-                assert_eq!(
-                    stdout.trim(),
-                    "The value of the 10th term in the Fibonacci sequence is: 34"
-                );
-                assert_eq!(id, 2);
+                handle_resp(stdout, id)
             }
         };
 
