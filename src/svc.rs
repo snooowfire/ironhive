@@ -1,9 +1,9 @@
-use std::mem;
+use std::{ffi::OsString, mem, os::windows::prelude::OsStringExt};
 
 use crate::{error::Error, WindowsService};
-use tracing::{debug, error};
+use tracing::debug;
 use windows::{
-    core::{HSTRING, PCWSTR, PWSTR},
+    core::{HSTRING, PCWSTR},
     Win32::{
         Security::SC_HANDLE,
         System::Services::{
@@ -24,7 +24,7 @@ struct Mgr {
 }
 
 struct Service {
-    name: PCWSTR,
+    name: OsString,
     handle: SC_HANDLE,
 }
 
@@ -50,15 +50,17 @@ struct Config {
     start_type: u32,
     error_control: u32,
     /// fully qualified path to the service binary file, can also include arguments for an auto-start service
-    binary_path_name: PWSTR,
-    load_order_group: PWSTR,
+    binary_path_name: OsString,
+    load_order_group: OsString,
     tag_id: u32,
-    dependencies: PWSTR,
+    dependencies: OsString,
     /// name of the account under which the service should run
-    service_start_name: PWSTR,
-    display_name: PWSTR,
-    password: PWSTR,
-    description: PWSTR,
+    service_start_name: OsString,
+    display_name: OsString,
+    /// TODO: Password is not returned by windows.QueryServiceConfig, not sure how to get it.
+    /// https://cs.opensource.google/go/x/sys/+/master:windows/svc/mgr/config.go;drc=1bfbee0e20e3039533666df89a91c1876e67605d;l=30
+    password: OsString,
+    description: OsString,
     /// one of SERVICE_SID_TYPE, the type of sid to use for the service
     sid_type: u32,
     /// the service is started after other auto-start services are started plus a short delay
@@ -73,10 +75,20 @@ macro_rules! query_service_config2 {
                 _ = unsafe { windows::Win32::System::Services::QueryServiceConfig2W(self.handle, $info_level, None, &mut bytes_needed) };
                 let mut raw_config = vec![0;bytes_needed as usize];
                 unsafe { windows::Win32::System::Services::QueryServiceConfig2W(self.handle, $info_level, Some(&mut raw_config[..]), &mut bytes_needed) }?;
-                let config = unsafe { *(raw_config.as_mut_ptr() as *mut $tp) };
+                let config = unsafe { (raw_config.as_mut_ptr() as *mut $tp).read() };
                 Ok(config)
             }
         )*
+    };
+}
+
+macro_rules! os_string {
+    ($wstr: expr) => {
+        if $wstr.is_null() {
+            OsString::default()
+        } else {
+            OsString::from_wide(unsafe { $wstr.as_wide() })
+        }
     };
 }
 
@@ -113,14 +125,14 @@ impl Service {
             service_type: raw_config.dwServiceType.0,
             start_type: raw_config.dwStartType.0,
             error_control: raw_config.dwErrorControl.0,
-            binary_path_name: raw_config.lpBinaryPathName,
-            load_order_group: raw_config.lpLoadOrderGroup,
+            binary_path_name: os_string!(raw_config.lpBinaryPathName),
+            load_order_group: os_string!(raw_config.lpLoadOrderGroup),
             tag_id: raw_config.dwTagId,
-            dependencies: raw_config.lpDependencies,
-            service_start_name: raw_config.lpServiceStartName,
-            display_name: raw_config.lpDisplayName,
-            password: PWSTR::null(),
-            description: description.lpDescription,
+            dependencies: os_string!(raw_config.lpDependencies),
+            service_start_name: os_string!(raw_config.lpServiceStartName),
+            display_name: os_string!(raw_config.lpDisplayName),
+            password: Default::default(),
+            description: os_string!(description.lpDescription),
             sid_type,
             delayed_auto_start: delayed_auto_start_info.fDelayedAutostart.as_bool(),
         };
@@ -147,7 +159,7 @@ impl Service {
             )
         }?;
 
-        let statu = unsafe { *(buffer.as_mut_ptr() as *mut SERVICE_STATUS_PROCESS) };
+        let statu = unsafe { (buffer.as_mut_ptr() as *mut SERVICE_STATUS_PROCESS).read() };
 
         Ok(Status {
             state: statu.dwCurrentState.0,
@@ -163,9 +175,7 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
-        if let Err(e) = unsafe { CloseServiceHandle(self.handle) } {
-            error!("close service failed: {e:?}");
-        }
+        _ = unsafe { CloseServiceHandle(self.handle) };
     }
 }
 
@@ -182,7 +192,10 @@ impl Mgr {
         let handle = unsafe { OpenServiceW(self.handle, name, SERVICE_ALL_ACCESS) }?;
 
         debug!("open_service well");
-        Ok(Service { name, handle })
+        Ok(Service {
+            name: OsString::from_wide(unsafe { name.as_wide() }),
+            handle,
+        })
     }
 
     fn list_services(&self) -> Result<Vec<PCWSTR>, Error> {
@@ -239,9 +252,7 @@ impl Mgr {
 
 impl Drop for Mgr {
     fn drop(&mut self) {
-        if let Err(e) = unsafe { CloseServiceHandle(self.handle) } {
-            error!("close windows service manager failed: {e:?}");
-        }
+        _ = unsafe { CloseServiceHandle(self.handle) };
     }
 }
 
@@ -303,22 +314,43 @@ fn get_config(conn: &Mgr, service: PCWSTR) -> Result<WindowsService, Error> {
     let q = srv.query()?;
     let config = srv.config()?;
     debug!("get config {config:?}");
-    debug!("{} live!", unsafe { service.display() });
-    Ok(unsafe {
-        WindowsService {
-            name: service.to_string()?,
-            status: service_status_text(q.state),
-            display_name: config.display_name.to_string()?,
-            bin_path: config.binary_path_name.to_string()?,
-            // TODO: 奇怪的bug，调用to_string就崩溃
-            // description: config.description.to_string()?,
-            username: config.service_start_name.to_string()?,
-            pid: q.process_id,
-            start_type: service_start_type(config.start_type),
-            delayed_auto_start: config.delayed_auto_start,
-            ..Default::default()
-        }
+    debug!("{:?} live!", srv.name);
+
+    Ok(WindowsService {
+        name: srv.name.clone(),
+        status: service_status_text(q.state),
+        display_name: config.display_name,
+        bin_path: config.binary_path_name,
+        description: config.description,
+        username: config.service_start_name,
+        pid: q.process_id,
+        start_type: service_start_type(config.start_type),
+        delayed_auto_start: config.delayed_auto_start,
     })
+}
+
+#[test]
+fn test_description() {
+    let conn = Mgr::connect().unwrap();
+    let svrs = conn.list_services().unwrap();
+    for svc in svrs {
+        let wide = os_string!(svc);
+        println!("will handle {:?}", wide);
+
+        if let Ok(svc) = conn.open_service(svc) {
+            let description = svc.query_description();
+            println!("{description:?}");
+            if let Ok(raw) = description {
+                let s = if raw.lpDescription.is_null() {
+                    OsString::default()
+                } else {
+                    os_string!(raw.lpDescription)
+                };
+
+                println!("{s:?}");
+            }
+        }
+    }
 }
 
 #[test]
@@ -327,8 +359,8 @@ fn test_get_config() {
     let conn = Mgr::connect().unwrap();
     let svrs = conn.list_services().unwrap();
     for svc in svrs {
-        // let wide = unsafe { svc.to_string() };
-        // println!("will handle {:?}", wide);
+        let wide = OsString::from_wide(unsafe { svc.as_wide() });
+        println!("will handle {:?}", wide);
 
         let config = get_config(&conn, svc);
         println!("config: {config:?}");

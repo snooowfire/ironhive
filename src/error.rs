@@ -43,8 +43,10 @@ pub enum Error {
     #[cfg(windows)]
     #[error("wmi error: {0}")]
     WmiError(#[from] wmi::WMIError),
-    #[error("from utf16 failed: {0}")]
+    #[error("from utf-16 failed: {0}")]
     FromUtf16Error(#[from] std::string::FromUtf16Error),
+    #[error("from utf-8 failed: {0}")]
+    FromUtf8Error(#[from] std::string::FromUtf8Error),
     #[error("broadcast recv failed: {0}")]
     BroadcastRecvError(#[from] tokio::sync::broadcast::error::RecvError),
     #[error("oneshot recv failed: {0}")]
