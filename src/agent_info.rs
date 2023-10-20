@@ -1,5 +1,3 @@
-use std::ffi::OsString;
-
 #[cfg(feature = "deserialize")]
 use serde::Deserialize;
 use serde::Serialize;
@@ -39,13 +37,13 @@ pub struct WinSvcNats {
 #[derive(Serialize, Debug, PartialEq, Default)]
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 pub struct WindowsService {
-    pub name: OsString,
+    pub name: String,
     pub status: String,
-    pub display_name: OsString,
+    pub display_name: String,
     #[serde(rename = "binpath")]
-    pub bin_path: OsString,
-    pub description: OsString,
-    pub username: OsString,
+    pub bin_path: String,
+    pub description: String,
+    pub username: String,
     pub pid: u32,
     pub start_type: String,
     #[serde(rename = "autodelay")]

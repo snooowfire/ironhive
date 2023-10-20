@@ -1,4 +1,4 @@
-use std::{ffi::OsString, mem, os::windows::prelude::OsStringExt};
+use std::mem;
 
 use crate::{error::Error, WindowsService};
 use tracing::debug;
@@ -24,7 +24,7 @@ struct Mgr {
 }
 
 struct Service {
-    name: OsString,
+    name: String,
     handle: SC_HANDLE,
 }
 
@@ -50,17 +50,17 @@ struct Config {
     start_type: u32,
     error_control: u32,
     /// fully qualified path to the service binary file, can also include arguments for an auto-start service
-    binary_path_name: OsString,
-    load_order_group: OsString,
+    binary_path_name: String,
+    load_order_group: String,
     tag_id: u32,
-    dependencies: OsString,
+    dependencies: String,
     /// name of the account under which the service should run
-    service_start_name: OsString,
-    display_name: OsString,
+    service_start_name: String,
+    display_name: String,
     /// TODO: Password is not returned by windows.QueryServiceConfig, not sure how to get it.
     /// https://cs.opensource.google/go/x/sys/+/master:windows/svc/mgr/config.go;drc=1bfbee0e20e3039533666df89a91c1876e67605d;l=30
-    password: OsString,
-    description: OsString,
+    password: String,
+    description: String,
     /// one of SERVICE_SID_TYPE, the type of sid to use for the service
     sid_type: u32,
     /// the service is started after other auto-start services are started plus a short delay
@@ -82,12 +82,12 @@ macro_rules! query_service_config2 {
     };
 }
 
-macro_rules! os_string {
+macro_rules! to_string {
     ($wstr: expr) => {
         if $wstr.is_null() {
-            OsString::default()
+            Ok(String::default())
         } else {
-            OsString::from_wide(unsafe { $wstr.as_wide() })
+            unsafe { $wstr.to_string() }
         }
     };
 }
@@ -125,14 +125,14 @@ impl Service {
             service_type: raw_config.dwServiceType.0,
             start_type: raw_config.dwStartType.0,
             error_control: raw_config.dwErrorControl.0,
-            binary_path_name: os_string!(raw_config.lpBinaryPathName),
-            load_order_group: os_string!(raw_config.lpLoadOrderGroup),
+            binary_path_name: to_string!(raw_config.lpBinaryPathName)?,
+            load_order_group: to_string!(raw_config.lpLoadOrderGroup)?,
             tag_id: raw_config.dwTagId,
-            dependencies: os_string!(raw_config.lpDependencies),
-            service_start_name: os_string!(raw_config.lpServiceStartName),
-            display_name: os_string!(raw_config.lpDisplayName),
+            dependencies: to_string!(raw_config.lpDependencies)?,
+            service_start_name: to_string!(raw_config.lpServiceStartName)?,
+            display_name: to_string!(raw_config.lpDisplayName)?,
             password: Default::default(),
-            description: os_string!(description.lpDescription),
+            description: to_string!(description.lpDescription)?,
             sid_type,
             delayed_auto_start: delayed_auto_start_info.fDelayedAutostart.as_bool(),
         };
@@ -193,7 +193,7 @@ impl Mgr {
 
         debug!("open_service well");
         Ok(Service {
-            name: OsString::from_wide(unsafe { name.as_wide() }),
+            name: unsafe { name.to_string() }?,
             handle,
         })
     }
@@ -334,20 +334,16 @@ fn test_description() {
     let conn = Mgr::connect().unwrap();
     let svrs = conn.list_services().unwrap();
     for svc in svrs {
-        let wide = os_string!(svc);
-        println!("will handle {:?}", wide);
+        let wide = to_string!(svc);
+        debug!("will handle {:?}", wide);
 
         if let Ok(svc) = conn.open_service(svc) {
             let description = svc.query_description();
-            println!("{description:?}");
+            debug!("{description:?}");
             if let Ok(raw) = description {
-                let s = if raw.lpDescription.is_null() {
-                    OsString::default()
-                } else {
-                    os_string!(raw.lpDescription)
-                };
+                let s = to_string!(raw.lpDescription);
 
-                println!("{s:?}");
+                debug!("{s:?}");
             }
         }
     }
@@ -359,11 +355,8 @@ fn test_get_config() {
     let conn = Mgr::connect().unwrap();
     let svrs = conn.list_services().unwrap();
     for svc in svrs {
-        let wide = OsString::from_wide(unsafe { svc.as_wide() });
-        println!("will handle {:?}", wide);
-
         let config = get_config(&conn, svc);
-        println!("config: {config:?}");
+        debug!("config: {config:?}");
     }
 }
 
@@ -377,5 +370,5 @@ fn test_get_service() {
 #[test]
 fn test_mgr() {
     let mgr = Mgr::connect();
-    println!("{mgr:?}");
+    debug!("{mgr:?}");
 }
