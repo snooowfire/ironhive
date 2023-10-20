@@ -2,7 +2,7 @@ use async_nats::ConnectOptions;
 use futures_util::StreamExt;
 use ironhive::NatsResp;
 
-use tracing::{info, Level};
+use tracing::Level;
 
 use clap::Parser;
 
