@@ -1,7 +1,8 @@
+use async_nats::ConnectOptions;
 use futures_util::StreamExt;
 use ironhive::NatsResp;
 
-use tracing::Level;
+use tracing::{info, Level};
 
 use clap::Parser;
 
@@ -35,7 +36,11 @@ async fn main() -> Result<(), ironhive::Error> {
 
     let args = Args::parse();
 
-    let client = async_nats::connect(args.server).await?;
+    let client = async_nats::connect_with_options(
+        args.server,
+        ConnectOptions::new().retry_on_initial_connect(),
+    )
+    .await?;
 
     let mut subscriber = client.subscribe(args.reply).await?;
 

@@ -1,8 +1,9 @@
 use std::{collections::HashMap, time::Duration};
 
+use async_nats::ConnectOptions;
 use ironhive::{NatsMsg, ScriptMode};
 
-use tracing::Level;
+use tracing::{info, Level};
 
 use clap::Parser;
 
@@ -48,7 +49,11 @@ async fn main() -> Result<(), ironhive::Error> {
 
     let args = Args::parse();
 
-    let client = async_nats::connect(args.server).await?;
+    let client = async_nats::connect_with_options(
+        args.server,
+        ConnectOptions::new().retry_on_initial_connect(),
+    )
+    .await?;
 
     client
         .publish_with_reply(
@@ -68,6 +73,10 @@ async fn main() -> Result<(), ironhive::Error> {
         )
         .await
         .unwrap();
+
+    client.flush().await.unwrap();
+
+    info!("publish python code fine!");
 
     Ok(())
 }

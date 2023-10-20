@@ -863,6 +863,7 @@ dependencies = [
  "windows 0.51.1",
  "winreg 0.51.0",
  "wmi",
+ "xflags",
  "xshell",
 ]
 
@@ -2382,6 +2383,21 @@ dependencies = [
  "thiserror",
  "windows 0.48.0",
 ]
+
+[[package]]
+name = "xflags"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4554b580522d0ca238369c16b8f6ce34524d61dafe7244993754bbd05f2c2ea"
+dependencies = [
+ "xflags-macros",
+]
+
+[[package]]
+name = "xflags-macros"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f58e7b3ca8977093aae6b87b6a7730216fc4c53a6530bab5c43a783cd810c1a8"
 
 [[package]]
 name = "xshell"

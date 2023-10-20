@@ -1,5 +1,6 @@
+use async_nats::ConnectOptions;
 use ironhive::Agent;
-use tracing::Level;
+use tracing::{info, Level};
 
 use clap::Parser;
 
@@ -9,7 +10,7 @@ use clap::Parser;
 struct Args {
     /// Id of the ironhive to publish
     #[arg(short, long)]
-    id: String,
+    agent_id: String,
 
     /// Server of nats to connect
     #[arg(short, long)]
@@ -26,16 +27,21 @@ async fn main() -> Result<(), ironhive::Error> {
     let args = Args::parse();
 
     let agent = Agent {
-        agent_id: args.id,
+        agent_id: args.agent_id,
         version: "0.1.0".into(),
         host_name: "ironhive".into(),
         nats_server: args.server,
         ..Default::default()
     };
 
-    let rpc = ironhive::Ironhive::new(agent).await?;
-
+    let rpc = ironhive::Ironhive::new_with_options(
+        agent,
+        ConnectOptions::new().retry_on_initial_connect(),
+    )
+    .await?;
+    info!("will run ironhive!");
     rpc.run().await?;
+    info!("ironhive error!");
 
     Ok(())
 }

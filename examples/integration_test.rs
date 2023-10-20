@@ -1,12 +1,21 @@
-use std::{process::Command, thread::sleep, time::Duration};
-
+use std::path::PathBuf;
+use std::process::Command;
 use xshell::{cmd, Shell};
 
 fn main() -> anyhow::Result<()> {
+    let flags = xflags::parse_or_exit! {
+        /// File or directory to remove
+        required python3: PathBuf
+    };
+
     let sh = Shell::new()?;
 
     // run server
     let server = nats_server::run_basic_server();
+
+    if !sh.path_exists("./bin") {
+        sh.create_dir("./bin")?;
+    }
 
     let cli = {
         #[cfg(windows)]
@@ -36,13 +45,6 @@ fn main() -> anyhow::Result<()> {
             cli,
         )?;
     }
-
-    let server_url = server.client_url();
-    let id = uuid::Uuid::new_v4().to_string();
-
-    let mut ironhive = Command::new(cli)
-        .args(["--id", id.as_str(), "--server", server_url.as_str()])
-        .spawn()?;
 
     let python = {
         #[cfg(windows)]
@@ -107,39 +109,63 @@ fn main() -> anyhow::Result<()> {
         )?;
     }
 
+    let server_url = server.client_url();
+    let agent_id = uuid::Uuid::new_v4().to_string();
+
+    let mut ironhive = Command::new(cli)
+        .args([
+            "--agent-id",
+            agent_id.as_str(),
+            "--server",
+            server_url.as_str(),
+        ])
+        .spawn()?;
+
+    std::thread::sleep(std::time::Duration::from_secs(2));
+
     let reply = "ironhive_run_python";
 
     let id = 1.to_string();
     let timeout = 10.to_string();
 
     let code = r#"
-    def fibonacci(n):
-        if n <= 0:
-            return "Please enter a positive integer."
-        elif n == 1:
-            return 0
-        elif n == 2:
-            return 1
-        else:
-            a, b = 0, 1
-            for _ in range(3, n+1):
-                a, b = b, a + b
-            return b
-    
-    n = 10
-    result = fibonacci(n)
-    print(f"The value of the {n}th term in the Fibonacci sequence is: {result}")
-                    "#;
-    sleep(Duration::from_secs(2));
-    cmd!(sh,"{python} --agent-id {id} --server {server_url} --reply {reply} --python python3 --timeout {timeout} --id {id} --code {code}").run()?;
+def fibonacci(n):
+    if n <= 0:
+        return "Please enter a positive integer."
+    elif n == 1:
+        return 0
+    elif n == 2:
+        return 1
+    else:
+        a, b = 0, 1
+        for _ in range(3, n+1):
+            a, b = b, a + b
+        return b
 
-    sleep(Duration::from_secs(2));
+n = 10
+result = fibonacci(n)
+print(f"The value of the {n}th term in the Fibonacci sequence is: {result}")
+                    "#;
+
+    let python3 = flags.python3;
+
     let expect = "The value of the 10th term in the Fibonacci sequence is: 34";
-    cmd!(
-        sh,
-        "{checker} --server {server_url} --reply {reply} --id {id} --expect {expect}"
-    )
-    .run()?;
+    let mut checker = Command::new(checker)
+        .args([
+            "--server",
+            server_url.as_str(),
+            "--reply",
+            reply,
+            "--id",
+            id.as_str(),
+            "--expect",
+            expect,
+        ])
+        .spawn()?;
+
+    cmd!(sh,"{python} --agent-id {agent_id} --server {server_url} --reply {reply} --python {python3} --timeout {timeout} --id {id} --code {code}").run()?;
+
+    assert!(checker.wait()?.success());
 
     ironhive.kill()?;
 
