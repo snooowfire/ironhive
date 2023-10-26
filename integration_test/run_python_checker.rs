@@ -1,4 +1,3 @@
-use async_nats::ConnectOptions;
 use futures_util::StreamExt;
 use ironhive::NatsResp;
 
@@ -10,10 +9,6 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Server of nats to connect
-    #[arg(long)]
-    server: String,
-
     /// Reply of the ironhive to publish
     #[arg(long)]
     reply: String,
@@ -29,18 +24,15 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<(), ironhive::Error> {
-    tracing_subscriber::fmt()
-        .with_level(true)
-        .with_max_level(Level::DEBUG)
-        .init();
+    tracing_subscriber::fmt().with_level(true).with_max_level(Level::DEBUG).init();
 
     let args = Args::parse();
 
-    let client = async_nats::connect_with_options(
-        args.server,
-        ConnectOptions::new().retry_on_initial_connect(),
-    )
-    .await?;
+    let config = ironhive::IronhiveConfig::new().unwrap();
+
+    let (agent, opts) = config.agent_and_options().await?;
+
+    let client = async_nats::connect_with_options(agent.nats_servers, opts).await?;
 
     let mut subscriber = client.subscribe(args.reply).await?;
 

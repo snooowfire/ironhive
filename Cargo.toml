@@ -5,57 +5,59 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
+[workspace]
+members = ["crates/*"]
+
+[workspace.dependencies]
 thiserror = "1.0"
 directories = "5.0"
-tokio = { version = "1.32", features = [
-    "rt",
-    "fs",
-    "io-util",
-    "process",
-    "time",
-    "macros",
-] }
+tokio = "1.32"
 tracing = "0.1"
 sysinfo = "0.29"
-async-nats = { version = "0.32", features = ["service"] }
-reqwest = { version = "0.11", features = ["json"] }
-serde = { version = "1.0", features = ["derive"] }
+async-nats = "0.32"
+reqwest = "0.11"
+serde = "1.0"
 serde_json = "1.0"
 futures-util = "0.3"
 futures = "0.3"
 humansize = "2.1"
-bytes = { version = "1.5", features = ["serde"] }
+bytes = "1.5"
 whoami = "1.4"
-async-scoped = { version = "0.7", features = ["use-tokio"] }
+async-scoped = "0.7"
 humantime-serde = "1.1"
-
-[target."cfg(target_os = \"windows\")".dependencies]
+chrono = "0.4"
+clap = "4.4"
+tracing-subscriber = "0.3"
+config = "0.13"
+rand = "0.8"
+anyhow = "1.0"
 winreg = "0.51"
-windows = { version = "0.51", features = [
-    "Win32_System_Threading",
-    "Win32_UI_WindowsAndMessaging",
-    "Win32_System_Services",
-    "Win32_Security",
-    "Win32_Foundation",
-    "Win32_System_Com",
-    "Win32_System_Registry",
-    "Win32_UI_Shell",
-    "Win32_System_Memory"
-] }
+windows = "0.51"
 wmi = "0.13"
-
-[dev-dependencies]
+windows-taskscheduler = { git = "https://github.com/Cupnfish/windows-taskscheduler-api-rust.git" }
+public-ip = "0.2"
 tracing-test = "0.2"
 nats-server = { git = "https://github.com/nats-io/nats.rs.git", tag = "async-nats/v0.32.1" }
-uuid = { version = "1.4", features = ["v4", "fast-rng", "macro-diagnostics"] }
-tracing-subscriber = "0.3"
+uuid = "1.4"
 xshell = "0.2"
-anyhow = "1.0"
-clap = { version = "4.4", features = ["derive"] }
 xflags = "0.3"
 
-[features]
-default = []
-deserialize = []
-test = ["tokio/rt-multi-thread"]
+[dependencies]
+config.workspace = true
+tracing.workspace = true
+ironhive-core = { path = "crates/core" }
+ironhive-config = { path = "crates/config" }
+clap = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+anyhow.workspace = true
+tracing-subscriber.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tracing-test.workspace = true
+nats-server.workspace = true
+tracing.workspace = true
+futures-util.workspace = true
+sysinfo.workspace = true
+async-nats.workspace = true
+ironhive-shared = { path = "crates/shared", features = ["client", "server"] }

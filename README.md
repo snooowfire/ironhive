@@ -1,66 +1,79 @@
 # Ironhive
 
-Ironhive is a Rust crate for deploying agents on local machines and remotely controlling them via NATS.
+Ironhive is an agent software designed to forward messages using the NATS messaging service. It provides a convenient way to monitor and manage various aspects of a system through message-based communication. This README document provides an overview of Ironhive and explains how to install and use it.
 
-## Key Features
+## Table of Contents
+- [Installation](#installation)
+- [Usage](#usage)
+- [Supported Functionality](#supported-functionality)
+- [Contributing](#contributing)
+- [License](#license)
 
-- Run as an agent on local machine, listening for NATS messages
-- Remotely get local machine info like processes, disks, IP etc via NATS
-- Remotely execute shell commands or scripts on local machine via NATS 
-- Cross-platform support for Windows, Linux and macOS
+## Installation
 
-## Usage Example
+To install Ironhive, follow these steps:
 
-```rust
-use ironhive::{Agent, AgentMode};
-use tokio::join;
-use tracing::{info, Level};
+1. Ensure that you have Rust programming language and Cargo package manager installed on your system.
+2. Open a terminal or command prompt.
+3. Run the following command to install Ironhive:
 
-#[tokio::main]
-async fn main() -> Result<(), ironhive::Error> {
-    tracing_subscriber::fmt()
-        .with_level(true)
-        .with_max_level(Level::DEBUG)
-        .init();
-
-    let agent_id = uuid::Uuid::new_v4();
-
-    info!("agent id: {}", agent_id.to_string());
-
-    let agent = Agent {
-        agent_id: agent_id.to_string(),
-        version: "0.1.0".into(),
-        host_name: "ironhive".into(),
-        nats_server: "nats://localhost:4222".into(),
-        ..Default::default()
-    };
-
-    let rpc = ironhive::Ironhive::new(agent).await?;
-
-    let client = rpc.client.clone();
-
-    let _ = join!(rpc.run(), do_nats_check_in(agent_id, &client));
-
-    Ok(())
-}
-
-async fn do_nats_check_in(
-    agent_id: uuid::Uuid,
-    client: &async_nats::Client,
-) -> Result<(), ironhive::Error> {
-    for (reply, m) in
-        AgentMode::all().map(|mode| (mode.to_string(), ironhive::NatsMsg::Checkin { mode }))
-    {
-        client
-            .publish_with_reply(agent_id.to_string(), reply, m.as_bytes())
-            .await?
-    }
-    Ok(())
-}
+```shell
+cargo install --git https://github.com/snooowfire/ironhive.git
 ```
 
-Ironhive enables executing commands and getting info from local machines easily via simple NATS messages, great for managing a cluster of machines.
+## Usage
+
+Once Ironhive is installed, you can use it by following these steps:
+
+1. Initialize the configuration by running the following command:
+
+```shell
+ironhive install --nats-servers <NATS_SERVERS>
+```
+
+Replace `<NATS_SERVERS>` with the list of NATS server addresses you want to connect to.
+
+2. Start the monitoring service by running the following command:
+
+```shell
+ironhive rpc
+```
+
+Note: On Windows, you may need to run the command with administrator privileges.
+
+## Supported Functionality
+
+Ironhive supports the following functionality:
+
+- **Ping**: Ping message to check connectivity.
+- **Patch Management**: Enable or disable patch management.
+- **Processes**: Retrieve information about running processes.
+- **Kill Process**: Terminate a specific process by its ID.
+- **Raw Command**: Execute a shell command with optional timeout.
+- **Windows Services**: Retrieve a list of Windows services.
+- **Windows Service Detail**: Retrieve detailed information about a specific Windows service.
+- **Windows Service Action**: Perform an action (start, stop, restart) on a Windows service.
+- **Edit Windows Service**: Modify the start type of a Windows service.
+- **Run Script**: Execute a script with optional timeout, arguments, and environment variables.
+- **Software List**: Retrieve a list of installed software.
+- **Reboot Now**: Initiate an immediate system reboot.
+- **Needs Reboot**: Check if the system requires a reboot.
+- **System Information**: Retrieve general system information.
+- **WMI**: Execute a WMI (Windows Management Instrumentation) query.
+- **CPU Load Average**: Retrieve the average CPU load.
+- **CPU Usage**: Retrieve CPU usage information.
+- **Public IP**: Retrieve the public IP address of the system.
+- **Install Choco**: Install Chocolatey package manager.
+- **Install With Choco**: Install a program using Chocolatey.
+- **Get Windows Updates**: Retrieve a list of available Windows updates.
+- **Install Windows Updates**: Install specified Windows updates.
+
+Please note that some of the above functionality may not be implemented yet, and additional features will be added gradually in the future.
 
 ## Contributing
 
-Contributions are welcome via Issues and PRs!
+Contributions to Ironhive are welcome! If you would like to contribute to the project, please follow the guidelines outlined in the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+
+## License
+
+Ironhive is open-source software released under the MIT License. See the [LICENSE](LICENSE) file for more details.
