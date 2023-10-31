@@ -1,131 +1,94 @@
 name: CI
 
 on:
-  merge_group:
-  pull_request:
-    branches: [ "main" ]
   push:
-    branches:
+    branches: 
+      - main
+  pull_request:
+    branches: 
       - main
 
-env:
-  CARGO_TERM_COLOR: always
-  NIGHTLY_TOOLCHAIN: nightly
-
 jobs:
+  check:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: -p ci -- --check
+
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-build-stable-${{ hashFiles('**/Cargo.toml') }}
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Set up Go
-        uses: actions/setup-go@v4 # v4 uses caching of Go out of the box
-        with:
-          go-version: '1.20'
-      - name: Install nats-server
-        run: go install github.com/nats-io/nats-server/v2@main
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10' 
-      - uses: actions-rs/cargo@v1
-      - name: Build & run tests
-        # See tools/ci/src/main.rs for the commands this runs
-        run: cargo run -p ci -- --test
-        env:
-          CARGO_INCREMENTAL: 0
-          RUSTFLAGS: "-C debuginfo=0 -D warnings"
-  test-windows:
-    runs-on: windows-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-build-stable-${{ hashFiles('**/Cargo.toml') }}
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Set up Go
-        uses: actions/setup-go@v4 # v4 uses caching of Go out of the box
-        with:
-          go-version: '1.20'
-      - name: Install nats-server
-        run: go install github.com/nats-io/nats-server/v2@main
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10' 
-      - uses: actions-rs/cargo@v1
-      - name: Build & run tests
-        # See tools/ci/src/main.rs for the commands this runs
-        run: runas /user:Administrator "cargo run -p ci -- --test"
-        env:
-          CARGO_INCREMENTAL: 0
-          RUSTFLAGS: "-C debuginfo=0 -D warnings"
-
-  ci:
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-ci-${{ hashFiles('**/Cargo.toml') }}
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-      - uses: actions-rs/cargo@v1
-      - name: CI job
-        # See tools/ci/src/main.rs for the commands this runs
-        run: cargo run -p ci -- --format --clippy
-
-  check-compiles:
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    needs: ci
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-check-compiles-${{ hashFiles('**/Cargo.toml') }}
-      - uses: dtolnay/rust-toolchain@stable
-        with:
+          profile: minimal
           toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v2
+      - name: Set up Go
+        uses: actions/setup-go@v4 # v4 uses caching of Go out of the box
+        with:
+          go-version: '1.20'
+      - name: Install nats-server
+        run: go install github.com/nats-io/nats-server/v2@main
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'       
       - uses: actions-rs/cargo@v1
-      - name: Check Compile
-        # See tools/ci/src/main.rs for the commands this runs
-        run: cargo run -p ci -- --check
+        with:
+          command: run
+          args: -p ci -- --test
+
+  fmt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+      - uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: -p ci -- --format
+
+  clippy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: -p ci -- --clippy
