@@ -63,7 +63,9 @@ jobs:
           args: -p ci -- --test
         if: matrix.os != 'windows-latest'
       - name: Windows Test
-        run: gsudo cargo run -p ci -- --test
+        run: |
+          echo 'cargo run -p ci -- --test' | Out-File -FilePath run-cargo.ps1 -Encoding ASCII
+          .\run-cargo.ps1 -RunAsAdmin
         if: matrix.os == 'windows-latest'
 
   fmt:
