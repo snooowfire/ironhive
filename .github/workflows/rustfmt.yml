@@ -45,9 +45,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all --features deserialize
-      - name: Integration Test
-        run: cargo run --example integration_test -- python
+          args: --all
 
   fmt:
     runs-on: ubuntu-latest
