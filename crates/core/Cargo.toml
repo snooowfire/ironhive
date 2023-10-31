@@ -1,0 +1,59 @@
+[package]
+name = "ironhive-core"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+shared = { package = "ironhive-shared", path = "../shared", default-features = false, features = [
+    "server",
+] }
+
+public-ip.workspace = true
+thiserror.workspace = true
+directories.workspace = true
+tokio = { workspace = true, features = [
+    "rt",
+    "fs",
+    "io-util",
+    "process",
+    "time",
+    "macros",
+] }
+tracing.workspace = true
+sysinfo.workspace = true
+async-nats = { workspace = true, features = ["service"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+futures-util.workspace = true
+futures.workspace = true
+humansize.workspace = true
+bytes = { workspace = true, features = ["serde"] }
+whoami.workspace = true
+async-scoped = { workspace = true, features = ["use-tokio"] }
+humantime-serde.workspace = true
+chrono = { workspace = true, features = ["serde"] }
+
+[target."cfg(target_os = \"windows\")".dependencies]
+winreg.workspace = true
+windows = { workspace = true, features = [
+    "Win32_System_Threading",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Services",
+    "Win32_Security",
+    "Win32_Foundation",
+    "Win32_System_Com",
+    "Win32_System_Registry",
+    "Win32_UI_Shell",
+    "Win32_System_Memory",
+    "Win32_System_Com",
+    "Win32_System_UpdateAgent",
+] }
+wmi.workspace = true
+windows-taskscheduler.workspace = true
+reqwest = { workspace = true, features = ["json"] }
+
+[dev-dependencies]
+tracing-test.workspace = true
+nats-server.workspace = true
