@@ -29,7 +29,10 @@ async fn run_script() {
                 "ironhive".into(),
                 IronhiveRequest::RunScript {
                     code: r#"print("hi from ironhive!")"#.into(),
-                    mode: ScriptMode::Binary { path: "python3".into(), ext: ".py".into() },
+                    mode: ScriptMode::Binary {
+                        path: "python3".into(),
+                        ext: ".py".into(),
+                    },
                     script_args: vec![],
                     timeout: Duration::from_secs(3),
                     env_vars: HashMap::new(),
@@ -63,7 +66,10 @@ result = fibonacci(n)
 print(f"The value of the {n}th term in the Fibonacci sequence is: {result}")
             "#
                     .into(),
-                    mode: ScriptMode::Binary { path: "python3".into(), ext: ".py".into() },
+                    mode: ScriptMode::Binary {
+                        path: "python3".into(),
+                        ext: ".py".into(),
+                    },
                     script_args: vec![],
                     timeout: Duration::from_secs(10),
                     env_vars: HashMap::new(),
@@ -99,7 +105,7 @@ print(f"The value of the {n}th term in the Fibonacci sequence is: {result}")
         }
 
         if let IronhiveRespond::RunScriptResp { stdout, id, .. } = resp {
-            handle_resp(stdout, id)
+            handle_resp(stdout, id);
         }
 
         let raw_resp = subscriber.next().await.unwrap();
@@ -107,7 +113,7 @@ print(f"The value of the {n}th term in the Fibonacci sequence is: {result}")
         assert!(matches!(resp, IronhiveRespond::RunScriptResp { .. }));
         debug!("{resp:#?}");
         if let IronhiveRespond::RunScriptResp { stdout, id, .. } = resp {
-            handle_resp(stdout, id)
+            handle_resp(stdout, id);
         }
     };
 

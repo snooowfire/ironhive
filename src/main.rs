@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 
 mod install;
 
-/// Simple Command Line Examples for IronHive
+/// Simple Command Line Examples for `IronHive`
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -29,19 +29,29 @@ enum Commands {
     /// Run IronHive.
     /// Note: IronHive must be installed using the 'install' command before running.
     Rpc,
+    /// Print environment variables.
     Env,
 }
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt().with_level(true).with_max_level(Level::TRACE).init();
+    tracing_subscriber::fmt()
+        .with_level(true)
+        .with_max_level(Level::TRACE)
+        .init();
 
     let args = Args::parse();
 
     if let Some(cmd) = args.command {
         match cmd {
-            Commands::Install { nats_servers, overwrite_config } => {
-                let installer = install::Installer { nats_servers, overwrite_config };
+            Commands::Install {
+                nats_servers,
+                overwrite_config,
+            } => {
+                let installer = install::Installer {
+                    nats_servers,
+                    overwrite_config,
+                };
 
                 installer.install().await?;
             }

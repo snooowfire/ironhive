@@ -24,7 +24,11 @@ async fn wmi() {
     let req = tokio::spawn(async move {
         tokio::time::sleep(Duration::from_secs(2)).await;
         client
-            .publish_with_reply(agent_id_clone, "ironhive".into(), IronhiveRequest::WMI.as_bytes())
+            .publish_with_reply(
+                agent_id_clone,
+                "ironhive".into(),
+                IronhiveRequest::WMI.as_bytes(),
+            )
             .await
             .unwrap();
     });

@@ -31,7 +31,12 @@ async fn basic_command() {
 
     use sysinfo::ProcessExt;
 
-    let name = rpc.agent.system.process(sysinfo::Pid::from(test_pid)).map(|p| p.name()).unwrap();
+    let name = rpc
+        .agent
+        .system
+        .process(sysinfo::Pid::from(test_pid))
+        .map(|p| p.name())
+        .unwrap();
 
     let expect_name = {
         #[cfg(windows)]
@@ -48,7 +53,9 @@ async fn basic_command() {
 
     let req = tokio::spawn(async move {
         let msgs = [
-            IronhiveRequest::KillProc { proc_pid: test_pid as u32 },
+            IronhiveRequest::KillProc {
+                proc_pid: test_pid as u32,
+            },
             IronhiveRequest::RawCmd {
                 shell: "cmd".into(),
                 command: "cargo --help".into(),
@@ -76,7 +83,10 @@ async fn basic_command() {
                     "ironhive".into()
                 }
             };
-            client.publish_with_reply(agent_id.to_string(), reply, msg.as_bytes()).await.unwrap();
+            client
+                .publish_with_reply(agent_id.to_string(), reply, msg.as_bytes())
+                .await
+                .unwrap();
             tokio::time::sleep(Duration::from_secs(2)).await;
         }
     });

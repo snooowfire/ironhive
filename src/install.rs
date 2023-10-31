@@ -43,7 +43,9 @@ impl Installer {
         if !default_config_path.exists() {
             let mut default_config = tokio::fs::File::create(default_config_path).await?;
 
-            default_config.write_all(&serde_json::to_vec_pretty(&config)?).await?;
+            default_config
+                .write_all(&serde_json::to_vec_pretty(&config)?)
+                .await?;
         }
 
         Ok(())
