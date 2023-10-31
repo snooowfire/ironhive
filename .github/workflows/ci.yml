@@ -51,12 +51,6 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install gsudo
-        run: PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
-        if: matrix.os == 'windows-latest'
-      - name: Refresh Env
-        run: RefreshEnv
-        if: matrix.os == 'windows-latest'
       - uses: actions-rs/cargo@v1
         with:
           command: run
