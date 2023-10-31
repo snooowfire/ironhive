@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 pub struct IronhiveConfig {
     /// NATS Server URLs
     addrs: Vec<String>,
+    /// exe path
+    pub exe_path: PathBuf,
     /// username
     pub agent_id: String,
     /// password

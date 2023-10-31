@@ -45,6 +45,9 @@ pub enum Error {
     #[error("windows error: {0}")]
     WindowsError(#[from] windows::core::Error),
     #[cfg(windows)]
+    #[error("windows service error: {0}")]
+    WindowsServiceError(#[from] windows_service::Error),
+    #[cfg(windows)]
     #[error("wmi error: {0}")]
     WmiError(#[from] wmi::WMIError),
     #[error("from utf-16 failed: {0}")]

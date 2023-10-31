@@ -7,7 +7,8 @@ pub mod task;
 pub mod wmi;
 pub mod wua;
 
-#[cfg(windows)]
+use windows_service::service::{ServiceFailureActions, ServiceInfo};
+
 #[must_use]
 pub fn is_root() -> bool {
     use std::{ffi::c_void, mem};
@@ -42,4 +43,47 @@ pub fn is_root() -> bool {
         };
     }
     elevated
+}
+
+pub struct ServiceInstaller {
+    pub info: ServiceInfo,
+    pub on_failure: Option<ServiceFailureActions>,
+}
+
+impl ServiceInstaller {
+    pub fn install_service(&mut self) -> Result<(), crate::Error> {
+        let Self { info, on_failure } = self;
+        use windows_service::{
+            service::ServiceAccess,
+            service_manager::{ServiceManager, ServiceManagerAccess},
+        };
+
+        let m =
+            ServiceManager::remote_computer("", Option::<&str>::None, ServiceManagerAccess::all())?;
+
+        if m.open_service(&info.name, ServiceAccess::QUERY_STATUS)
+            .is_ok()
+        {
+            tracing::info!("service {:?} already exists", info.name);
+            return Ok(());
+        }
+
+        let s = m.create_service(info, ServiceAccess::all())?;
+
+        if let Some(action) = on_failure.take() {
+            s.update_failure_actions(action)?;
+        }
+
+        // TODO:
+
+        // err = eventlog.InstallAsEventCreate(ws.Name, eventlog.Error|eventlog.Warning|eventlog.Info)
+        // if err != nil {
+        // 	if !strings.Contains(err.Error(), "exists") {
+        // 		s.Delete()
+        // 		return fmt.Errorf("SetupEventLogSource() failed: %s", err)
+        // 	}
+        // }
+
+        Ok(())
+    }
 }

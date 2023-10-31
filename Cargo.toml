@@ -41,6 +41,7 @@ nats-server = { git = "https://github.com/nats-io/nats.rs.git", tag = "async-nat
 uuid = "1.4"
 xshell = "0.2"
 xflags = "0.3"
+windows-service = "0.6"
 
 [dependencies]
 config.workspace = true

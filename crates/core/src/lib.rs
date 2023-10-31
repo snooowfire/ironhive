@@ -15,4 +15,10 @@ pub use rpc::Ironhive;
 pub use shared::*;
 
 #[cfg(windows)]
-pub use windows::is_root;
+pub use windows::{is_root, ServiceInstaller};
+
+#[cfg(windows)]
+pub use windows_service::service::{
+    ServiceAction, ServiceActionType, ServiceErrorControl, ServiceFailureActions,
+    ServiceFailureResetPeriod, ServiceInfo, ServiceStartType, ServiceType,
+};

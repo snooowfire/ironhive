@@ -53,6 +53,7 @@ windows = { workspace = true, features = [
 wmi.workspace = true
 windows-taskscheduler.workspace = true
 reqwest = { workspace = true, features = ["json"] }
+windows-service.workspace = true
 
 [dev-dependencies]
 tracing-test.workspace = true
