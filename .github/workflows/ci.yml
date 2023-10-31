@@ -21,7 +21,7 @@ jobs:
           override: true
       - uses: Swatinem/rust-cache@v2
       - name: list files
-        run: ls
+        run: ls && pwd && ls crates/ && ls crates/config/
       - uses: actions-rs/cargo@v1
         with:
           command: run
