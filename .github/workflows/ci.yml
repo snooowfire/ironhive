@@ -59,7 +59,7 @@ jobs:
       - name: Windows Test
         run: |
           echo 'cargo run -p ci -- --test' | Out-File -FilePath run-cargo.ps1 -Encoding ASCII
-          .\run-cargo.ps1 -RunAsAdmin
+          .\run-cargo.ps1 -RunAsAdmin -Confirm:$false
         if: matrix.os == 'windows-latest'
 
   fmt:
