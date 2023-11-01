@@ -1,7 +1,7 @@
 use std::{mem, time::Duration};
 
 use crate::error::Error;
-// use chrono::NaiveDate;
+use chrono::NaiveDate;
 use shared::{WinSoftwareList, WindowsService};
 use std::fmt::Debug;
 use tracing::debug;
@@ -545,8 +545,7 @@ fn get_software_list(basekey: String) -> Result<Vec<WinSoftwareList>, Error> {
             software_list! {
                 version => "DisplayVersion",
                 publisher => "Publisher",
-                install_date => "InstallDate",
-                // install_date in NaiveDate::parse_from_str(&install_date, "%Y%m%d").unwrap().format("%Y-%m-%d").to_string() => "InstallDate",
+                install_date in NaiveDate::parse_from_str(&install_date, "%Y%m%d").map(|date| date.format("%Y-%m-%d").to_string()).unwrap_or_default() => "InstallDate",
                 size in humansize::format_size(size * 1024, humansize::WINDOWS) => "EstimatedSize" = u64,
                 source => "InstallSource",
                 location => "InstallLocation",

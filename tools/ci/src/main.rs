@@ -51,27 +51,39 @@ fn main() {
     if flags.test {
         macro_rules! test_windows {
             ($($test: path),*) => {
+            #[cfg(windows)]
+            {
                 $(
                     let test = stringify!($test);
-                    #[cfg(windows)]
+
                     cmd!(sh,"cargo test --package ironhive-core --lib -- {test} --exact --nocapture")
                         .run()
                         .expect("Please fix failing tests in output above.");
                 )*
+            }
             };
         }
+
         test_windows!(
-            // windows::wua::test_updates,
-            // windows::wmi::test_wmi,
-            // windows::svc::test_description,
-            // windows::svc::test_get_config,
-            // windows::svc::test_get_service,
-            // windows::svc::test_mgr,
-            // utils::test_public_ip,
+            windows::wua::test_updates,
+            windows::wmi::test_wmi,
+            windows::svc::test_description,
+            windows::svc::test_get_config,
+            windows::svc::test_get_service,
+            windows::svc::test_mgr,
+            utils::test_public_ip,
             windows::svc::test_installed_software_list,
             agent::tests::test_agent
         );
+        #[cfg(windows)]
+        cmd!(
+            sh,
+            "cargo test --workspace --lib --bins --tests --benches --exclude ironhive-core"
+        )
+        .run()
+        .expect("Please fix failing tests in output above.");
 
+        #[cfg(not(windows))]
         cmd!(sh, "cargo test --workspace --lib --bins --tests --benches")
             .run()
             .expect("Please fix failing tests in output above.");
