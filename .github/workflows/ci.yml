@@ -58,6 +58,8 @@ jobs:
         if: matrix.os != 'windows-latest'
       - name: Windows Test
         run: |
+          echo 'Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False' | Out-File -FilePath disable-netfirewall.ps1 -Encoding ASCII
+          .\disable-netfirewall.ps1 -RunAsAdmin -Confirm:$false
           echo 'cargo run -p ci -- --test' | Out-File -FilePath run-cargo.ps1 -Encoding ASCII
           .\run-cargo.ps1 -RunAsAdmin -Confirm:$false
         if: matrix.os == 'windows-latest'
