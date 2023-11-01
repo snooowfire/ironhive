@@ -64,6 +64,11 @@ fn main() {
             };
         }
 
+        // Why is it necessary to execute these tests separately?
+        // The main reason is that some tests rely on querying certain Windows services,
+        // which have a probability of crashing when executed within the same program in the CI environment.
+        // Therefore, a separate program needs to be launched to handle these queries.
+        // The upper-level invocation doesn't need to worry about this issue as it is wrapped in a Mutex layer.
         test_windows!(
             windows::wua::test_updates,
             windows::wmi::test_wmi,
