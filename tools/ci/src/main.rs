@@ -54,7 +54,7 @@ fn main() {
             .run()
             .expect("Please fix failing tests in output above.");
         #[cfg(windows)]
-        cmd!(sh,"cargo test --package ironhive-core --lib -- windows::wmi::test_wmi --exact --nocapture")
+        cmd!(sh,"cargo test --package ironhive-core --lib -- --exact --nocapture")
             .run()
             .expect("Please fix failing tests in output above.");
         cmd!(sh, "cargo test --workspace --lib --bins --tests --benches")
