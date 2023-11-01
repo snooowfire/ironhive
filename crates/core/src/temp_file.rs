@@ -65,7 +65,7 @@ fn remove_file(path: &Path) -> io::Result<()> {
         if fs::remove_file(path).is_ok() {
             return Ok(());
         }
-        std::thread::sleep(std::time::Duration::from_millis(10))
+        std::thread::sleep(std::time::Duration::from_millis(10));
     }
     fs::remove_file(path)
 }

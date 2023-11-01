@@ -227,8 +227,7 @@ where
                                 tmp.append(&mut args);
                                 tmp
                             }
-                            ScriptMode::Cmd => args,
-                            ScriptMode::Directly => args,
+                            ScriptMode::Cmd | ScriptMode::Directly => args,
                         }
                     },
                     program: {

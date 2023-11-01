@@ -209,7 +209,7 @@ unsafe fn more_info_urls(updt: &IUpdate) -> Result<Vec<String>, Error> {
 
     for i in 0..count {
         let item = more_info_urls.get_Item(i)?;
-        ss.push(item.to_string())
+        ss.push(item.to_string());
     }
 
     Ok(ss)
@@ -228,7 +228,7 @@ unsafe fn kba_ids(updt: &IUpdate) -> Result<Vec<String>, Error> {
 
     for i in 0..count {
         let item = kbarticle_ids.get_Item(i)?;
-        ss.push(item.to_string())
+        ss.push(item.to_string());
     }
 
     Ok(ss)
@@ -249,7 +249,7 @@ pub fn get_win_updates() -> Result<Vec<WUAPackage>, Error> {
 #[test]
 #[tracing_test::traced_test]
 fn test_updates() {
-    assert!(get_win_updates().is_ok())
+    assert!(get_win_updates().is_ok());
 }
 
 pub fn install_updates(guids: Vec<String>) -> Result<bool, Error> {

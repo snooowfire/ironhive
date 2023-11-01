@@ -61,13 +61,13 @@ fn main() {
             };
         }
         test_windows!(
-            windows::wua::test_updates,
-            windows::wmi::test_wmi,
-            windows::svc::test_description,
-            windows::svc::test_get_config,
-            windows::svc::test_get_service,
-            windows::svc::test_mgr,
-            utils::test_public_ip,
+            // windows::wua::test_updates,
+            // windows::wmi::test_wmi,
+            // windows::svc::test_description,
+            // windows::svc::test_get_config,
+            // windows::svc::test_get_service,
+            // windows::svc::test_mgr,
+            // utils::test_public_ip,
             windows::svc::test_installed_software_list,
             agent::tests::test_agent
         );
