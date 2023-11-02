@@ -95,7 +95,7 @@ impl crate::agent::Agent {
         client
             .publish_with_reply(
                 self.agent_id.clone(),
-                serde_json::to_string(&mode).unwrap(),
+                mode.to_string(),
                 writer.into_inner().freeze(),
             )
             .await?;

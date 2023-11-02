@@ -515,6 +515,7 @@ async fn handle_request(
             #[cfg(not(windows))]
             let res: Result<(), IronhiveRespond> = Ok(());
 
+            // Unwrapping `Result<IronhiveRespond, IronhiveRespond>` here should not cause any issues.
             let resp = res
                 .map(|_| IronhiveRespond::WinSvcResp {
                     success: true,
@@ -541,6 +542,7 @@ async fn handle_request(
             #[cfg(not(windows))]
             let res: Result<(), IronhiveRespond> = Ok(());
 
+            // Unwrapping `Result<IronhiveRespond, IronhiveRespond>` here should not cause any issues.
             let resp = res
                 .map(|_| IronhiveRespond::WinSvcResp {
                     success: true,

@@ -48,7 +48,7 @@ async fn wmi() {
 
         while let Some(raw_resp) = subscriber.next().await {
             if let Some(reply) = raw_resp.reply {
-                if reply.eq(&serde_json::to_string(&AgentMode::WMI).unwrap()) {
+                if reply.eq(&AgentMode::WMI.to_string()) {
                     let res = serde_json::from_slice::<WinWMINats>(&raw_resp.payload);
 
                     assert!(res.is_ok());

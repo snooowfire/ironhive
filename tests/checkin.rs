@@ -60,7 +60,7 @@ async fn checkin() {
 
                     while let Some(raw_resp) = subscriber.next().await {
                         if let Some(reply) = raw_resp.reply {
-                            if reply.eq(&serde_json::to_string(&$agent_mode).unwrap()) {
+                            if reply.eq(&$agent_mode.to_string()) {
                                 let res = serde_json::from_slice::<$resp>(&raw_resp.payload);
 
                                 assert!(res.is_ok());

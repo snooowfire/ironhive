@@ -211,7 +211,11 @@ fn test_serialize_config() {
         ..Default::default()
     };
 
-    let json = serde_json::to_string_pretty(&config).unwrap();
+    let json_res = serde_json::to_string_pretty(&config);
 
-    println!("{json}");
+    assert!(json_res.is_ok());
+
+    if let Ok(json) = json_res {
+        tracing::debug!("{json}");
+    }
 }

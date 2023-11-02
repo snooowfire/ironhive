@@ -570,19 +570,25 @@ fn test_installed_software_list() {
 
 #[test]
 fn test_description() {
-    let conn = Mgr::connect().unwrap();
-    let svrs = conn.list_services().unwrap();
-    for svc in svrs {
-        let wide = to_string!(svc);
-        debug!("will handle {:?}", wide);
+    let conn_res = Mgr::connect();
+    assert!(conn_res.is_ok());
+    if let Ok(conn) = conn_res {
+        let svrs_res = conn.list_services();
+        assert!(svrs_res.is_ok());
+        if let Ok(svrs) = svrs_res {
+            for svc in svrs {
+                let wide = to_string!(svc);
+                debug!("will handle {:?}", wide);
 
-        if let Ok(svc) = conn.open_service(svc) {
-            let description = svc.query_description();
-            debug!("{description:?}");
-            if let Ok(raw) = description {
-                let s = to_string!(raw.lpDescription);
+                if let Ok(svc) = conn.open_service(svc) {
+                    let description = svc.query_description();
+                    debug!("{description:?}");
+                    if let Ok(raw) = description {
+                        let s = to_string!(raw.lpDescription);
 
-                debug!("{s:?}");
+                        debug!("{s:?}");
+                    }
+                }
             }
         }
     }
@@ -591,11 +597,17 @@ fn test_description() {
 #[test]
 #[tracing_test::traced_test]
 fn test_get_config() {
-    let conn = Mgr::connect().unwrap();
-    let svrs = conn.list_services().unwrap();
-    for svc in svrs {
-        let config = get_config(&conn, svc);
-        debug!("config: {config:?}");
+    let conn_res = Mgr::connect();
+    assert!(conn_res.is_ok());
+    if let Ok(conn) = conn_res {
+        let svrs_res = conn.list_services();
+        assert!(svrs_res.is_ok());
+        if let Ok(svrs) = svrs_res {
+            for svc in svrs {
+                let config = get_config(&conn, svc);
+                debug!("config: {config:?}");
+            }
+        }
     }
 }
 

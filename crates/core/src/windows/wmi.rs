@@ -70,16 +70,24 @@ impl WmiManager {
 
     pub async fn init() -> Result<Self, Error> {
         let (tx, rx) = tokio::sync::oneshot::channel();
-        // TODO:
         std::thread::spawn(|| {
-            tokio::runtime::Runtime::new()
-                .unwrap()
-                .block_on(async move {
-                    let wmi = WmiLocalBlocking::new(tx)?;
-                    wmi.run().await;
-                    Result::<(), Error>::Ok(())
-                })
-                .expect("wmi local blocking run failed.");
+            let rt_res = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build();
+            match rt_res {
+                Ok(rt) => {
+                    if let Err(e) = rt.block_on(async move {
+                        let wmi = WmiLocalBlocking::new(tx)?;
+                        wmi.run().await;
+                        Result::<(), Error>::Ok(())
+                    }) {
+                        error!("spawn WMI manager failed: {e:?}");
+                    };
+                }
+                Err(e) => {
+                    error!("create WMI blocking tokio runtime failed: {e:?}");
+                }
+            }
         });
         let manager = rx.await?;
         Ok(manager)
@@ -145,8 +153,7 @@ macro_rules! wmi_get_ex {
                 .conn
                 .exec_query_async_native_wrapper(concat!("SELECT * FROM ",stringify!($name),"EX"));
 
-                if ex_stream.is_ok() {
-                    let mut ex_stream = ex_stream.unwrap();
+                if let Ok(mut ex_stream) = ex_stream {
                     while let Some(res) = ex_stream.next().await {
                         match res {
                             Err(e) => {
@@ -247,8 +254,14 @@ impl WMI {
 #[tracing_test::traced_test]
 async fn test_wmi() {
     if let Ok(mut wmi) = WmiManager::init().await {
-        let val = wmi.get_wmi_info().await.unwrap();
-        let json = serde_json::to_string_pretty(&val).unwrap();
-        println!("{json}");
+        let res = wmi.get_wmi_info().await;
+        assert!(res.is_ok());
+        if let Ok(val) = res {
+            let json_res = serde_json::to_string_pretty(&val);
+            assert!(json_res.is_ok());
+            if let Ok(json) = json_res {
+                tracing::debug!("{json}");
+            }
+        }
     }
 }

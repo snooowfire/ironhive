@@ -287,8 +287,9 @@ fn get_powershell_exe() -> std::path::PathBuf {
         }
     }
     debug!("get powershell exe fallback");
+
     // powershell.exe not found, fallback to default path
-    std::path::PathBuf::from(std::env::var("WINDIR").unwrap())
+    std::path::PathBuf::from(std::env::var("WINDIR").unwrap_or(r"C:\Windows".into()))
         .join("System32")
         .join("WindowsPowerShell")
         .join("v1.0")
@@ -307,7 +308,7 @@ fn get_cmd_exe() -> std::path::PathBuf {
     }
     debug!("get cmd exe fallback");
     // cmd.exe not found, fallback to default path
-    std::path::PathBuf::from(std::env::var("WINDIR").unwrap())
+    std::path::PathBuf::from(std::env::var("WINDIR").unwrap_or(r"C:\Windows".into()))
         .join("System32")
         .join("cmd.exe")
 }

@@ -243,3 +243,17 @@ impl AgentMode {
         ]
     }
 }
+
+impl ToString for AgentMode {
+    fn to_string(&self) -> String {
+        match self {
+            AgentMode::Hello => "agent-hello",
+            AgentMode::WinSvc => "agent-winsvc",
+            AgentMode::AgentInfo => "agent-agentinfo",
+            AgentMode::WMI => "agent-wmi",
+            AgentMode::Disks => "agent-disks",
+            AgentMode::PublicIp => "agent-publicip",
+        }
+        .into()
+    }
+}
