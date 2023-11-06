@@ -93,10 +93,11 @@ pub fn environment() -> Environment {
 }
 
 impl IronhiveConfig {
-    pub fn init(addrs: Vec<String>, agent_id: String) -> Self {
+    pub fn init(addrs: Vec<String>, agent_id: String, exe_path: PathBuf) -> Self {
         Self {
             addrs,
             agent_id,
+            exe_path,
             ..Default::default()
         }
     }

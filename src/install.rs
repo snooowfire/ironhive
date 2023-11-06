@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::{anyhow, Ok, Result};
 use tokio::io::AsyncWriteExt;
 use tracing::debug;
@@ -6,6 +8,7 @@ use ironhive_config::{default_config_json, generate_agent_id, proj_dirs, Ironhiv
 
 pub struct Installer {
     pub nats_servers: Vec<String>,
+    pub exe_path: PathBuf,
     pub overwrite_config: bool,
 }
 
@@ -28,7 +31,7 @@ impl Installer {
 
         debug!("Agent ID: {agent_id}");
 
-        let config = IronhiveConfig::init(self.nats_servers, agent_id);
+        let config = IronhiveConfig::init(self.nats_servers, agent_id, self.exe_path);
 
         let proj_dirs = proj_dirs()?;
 

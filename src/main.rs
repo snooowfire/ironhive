@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use config::Source;
 use ironhive_config::{environment, IronhiveConfig};
 use tracing::Level;
@@ -22,7 +24,9 @@ enum Commands {
         /// Specify the addresses of NATS servers for IronHive to connect to.
         #[arg(short, long)]
         nats_servers: Vec<String>,
-
+        /// Specify the path to the executable file of IronHive program.
+        #[arg(short, long)]
+        exe_path: PathBuf,
         /// Enable or disable overwriting the existing default configuration file.
         #[arg(long, action = clap::ArgAction::SetTrue)]
         overwrite_config: bool,
@@ -49,10 +53,12 @@ async fn main() -> anyhow::Result<()> {
         match cmd {
             Commands::Install {
                 nats_servers,
+                exe_path,
                 overwrite_config,
             } => {
                 let installer = install::Installer {
                     nats_servers,
+                    exe_path,
                     overwrite_config,
                 };
 

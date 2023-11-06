@@ -3,6 +3,7 @@
 Ironhive is an agent software designed to forward messages using the NATS messaging service. It provides a convenient way to monitor and manage various aspects of a system through message-based communication. This README document provides an overview of Ironhive and explains how to install and use it.
 
 ## Table of Contents
+
 - [Installation](#installation)
 - [Usage](#usage)
 - [Supported Functionality](#supported-functionality)
@@ -28,10 +29,10 @@ Once Ironhive is installed, you can use it by following these steps:
 1. Initialize the configuration by running the following command:
 
 ```shell
-ironhive install --nats-servers <NATS_SERVERS>
+ironhive install --nats-servers <NATS_SERVERS> --exe-path <EXE_PATH>
 ```
 
-Replace `<NATS_SERVERS>` with the list of NATS server addresses you want to connect to.
+Replace <NATS_SERVERS> with the list of NATS server addresses you want to connect to, and <EXE_PATH> with the path to the IronHive program's executable file.
 
 2. Start the monitoring service by running the following command:
 
