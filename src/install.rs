@@ -82,7 +82,7 @@ fn install_service(exe_path: std::path::PathBuf) -> Result<()> {
             display_name: "Ironhive Agent Service".into(),
             executable_path: exe_path,
             launch_arguments: vec!["rpc".into()],
-            service_type: ServiceType::all(),
+            service_type: ServiceType::OWN_PROCESS | ServiceType::INTERACTIVE_PROCESS,
             start_type: ServiceStartType::AutoStart,
             error_control: ServiceErrorControl::Severe,
             dependencies: vec![],
