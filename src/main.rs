@@ -5,6 +5,7 @@ use tracing::Level;
 use clap::{Parser, Subcommand};
 
 mod install;
+mod uninstall;
 
 /// Simple Command Line Examples for `IronHive`
 #[derive(Parser, Debug)]
@@ -26,6 +27,8 @@ enum Commands {
         #[arg(long, action = clap::ArgAction::SetTrue)]
         overwrite_config: bool,
     },
+    /// Uninstall IronHive program.
+    Uninstall,
     /// Run IronHive.
     /// Note: IronHive must be installed using the 'install' command before running.
     Rpc,
@@ -54,6 +57,9 @@ async fn main() -> anyhow::Result<()> {
                 };
 
                 installer.install().await?;
+            }
+            Commands::Uninstall => {
+                uninstall::Uninstaller::uninstall().await?;
             }
             Commands::Rpc => {
                 let config = IronhiveConfig::new()?;

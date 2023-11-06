@@ -87,3 +87,25 @@ impl ServiceInstaller {
         Ok(())
     }
 }
+
+pub struct ServiceUninstaller {
+    pub name: String,
+}
+
+impl ServiceUninstaller {
+    pub fn uninstall_service(&self) -> Result<(), crate::Error> {
+        use windows_service::{
+            service::ServiceAccess,
+            service_manager::{ServiceManager, ServiceManagerAccess},
+        };
+
+        let m =
+            ServiceManager::remote_computer("", Option::<&str>::None, ServiceManagerAccess::all())?;
+
+        let s = m.open_service(&self.name, ServiceAccess::DELETE)?;
+
+        s.delete()?;
+
+        Ok(())
+    }
+}

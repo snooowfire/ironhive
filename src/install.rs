@@ -55,7 +55,7 @@ impl Installer {
     }
 }
 
-async fn check_existing_and_remove() -> Result<()> {
+pub async fn check_existing_and_remove() -> Result<()> {
     let proj_dirs = proj_dirs()?;
 
     let config_dir = proj_dirs.config_dir();

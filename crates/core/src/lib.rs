@@ -15,7 +15,7 @@ pub use rpc::Ironhive;
 pub use shared::*;
 
 #[cfg(windows)]
-pub use windows::{is_root, ServiceInstaller};
+pub use windows::{is_root, ServiceInstaller, ServiceUninstaller};
 
 #[cfg(windows)]
 pub use windows_service::service::{
